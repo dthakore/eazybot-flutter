@@ -33,7 +33,10 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> getToken() async {
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       String? token = await FirebaseMessaging.instance.getToken();
-      print("Token: $token");
+      setState(() {
+        fcmToken = token;
+      });
+      print("🔥 FCM TOKEN: $token");
     }
   }
 
