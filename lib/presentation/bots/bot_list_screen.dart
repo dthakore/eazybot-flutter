@@ -9,6 +9,8 @@ import '../../constant/string.dart';
 import '../../core/route.dart';
 import '../../styles/text_styles.dart';
 import '../../util/myappbar.dart';
+import '../../api/bot_api.dart';
+import '../../models/bot_model.dart';
 
 class BotListScreen extends StatefulWidget {
   const BotListScreen({super.key});
@@ -18,111 +20,164 @@ class BotListScreen extends StatefulWidget {
 }
 
 class _BotListScreenState extends State<BotListScreen> {
+  final BotApi _api = BotApi();
 
-  var namesArr = ["Mehul", "Sunil","Aswin", "Jayesh", "Kaushal","Mehul", "Sunil","Aswin", "Jayesh", "Kaushal", "Mehul", "Sunil","Aswin", "Jayesh", "Kaushal"];
+  List<BotModel> bots = [];
+
+  bool isLoading = true;
+  String error = "";
+
+  Map<String, dynamic>? statsInfo;
+  Map<String, dynamic>? revenueInsights;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchBots();
+  }
+
+  Future<void> fetchBots() async {
+    try {
+      final response = await _api.getBots();
+
+      final data = response['data'];
+
+      final List botList = data['data'];
+
+      bots = botList.map((e) => BotModel.fromJson(e)).toList();
+
+      statsInfo = data['stats_info'];
+      revenueInsights = data['revenue_insights'];
+
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        error = "Failed to load bots";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
-        //key: blockKey,
         backgroundColor: colorF1F5F9,
-        //drawer: SideMenu(),
-        appBar: MyAppBar(title: "", isFirstScreen: true, actions: [
-          Padding(
-              padding: EdgeInsets.only(right: 5.0),
-              child: GestureDetector(
-                onTap: () {
-                  print("Notification");
-                },
-                child: Container(child: Image.asset(icNotification),height: 50, width: 50,),
-              )
-          ),
-          Padding(
-              padding: EdgeInsets.only(right: 10.0),
-              child: GestureDetector(
-                onTap: () {
-                  print("My photo");
-                },
-                child: Container(
-                  height: 40,
-                  child: Stack(
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        spacing: 6,
+        appBar: MyAppBar(
+          title: "",
+          isFirstScreen: true,
+          actions: [
+            Padding(
+                padding: EdgeInsets.only(right: 5.0),
+                child: GestureDetector(
+                  onTap: () {
+                    print("Notification");
+                  },
+                  child: Container(
+                    child: Image.asset(icNotification),
+                    height: 50,
+                    width: 50,
+                  ),
+                )),
+            Padding(
+                padding: EdgeInsets.only(right: 10.0),
+                child: GestureDetector(
+                    onTap: () {
+                      print("My photo");
+                    },
+                    child: Container(
+                      height: 40,
+                      child: Stack(
                         children: [
-                          Container(
-                            width: 35,
-                            height: 35,
-                            decoration: ShapeDecoration(
-                              image: DecorationImage(
-                                //image: NetworkImage("https://picsum.photos/id/64/60/60"), https://picsum.photos/200
-                                image: NetworkImage("https://picsum.photos/100"),
-                                fit: BoxFit.cover,
-
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(100),
-                                  topRight: Radius.circular(100),
-                                  bottomLeft: Radius.circular(100),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            spacing: 6,
+                            children: [
+                              Container(
+                                width: 35,
+                                height: 35,
+                                decoration: ShapeDecoration(
+                                  image: DecorationImage(
+                                    image: NetworkImage(
+                                        "https://picsum.photos/100"),
+                                    fit: BoxFit.cover,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(100),
+                                      topRight: Radius.circular(100),
+                                      bottomLeft: Radius.circular(100),
+                                    ),
+                                  ),
+                                  shadows: [
+                                    BoxShadow(
+                                      color: Color(0xFFCAD4E8),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 4),
+                                      spreadRadius: 0,
+                                    )
+                                  ],
                                 ),
                               ),
-                              shadows: [
-                                BoxShadow(
-                                  color: Color(0xFFCAD4E8),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 4),
-                                  spreadRadius: 0,
-                                )
-                              ],
-                            ),
-
+                              SizedBox(
+                                width: 5,
+                              )
+                            ],
                           ),
-                          SizedBox(width: 5,)
+                          Positioned(
+                              right: 6,
+                              child: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: ShapeDecoration(
+                                  color: const Color(0xFF48C884),
+                                  shape: OvalBorder(
+                                    side: BorderSide(
+                                        width: 1, color: Colors.white),
+                                  ),
+                                ),
+                              ))
                         ],
                       ),
-                      Positioned(
-                        right: 6,
-                        child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: ShapeDecoration(
-                          color: const Color(0xFF48C884),
-                          shape: OvalBorder(
-                            side: BorderSide(width: 1, color: Colors.white),
-                          ),
-                        ),
-                      )
-                      )
-                    ],
-                  ),
-                )
-              )
-          ),
-        ],),
-        body: SingleChildScrollView(
+                    ))),
+          ],
+        ),
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : error.isNotEmpty
+            ? Center(child: Text(error))
+            : SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.only(left: 20, right: 20, top: 8, bottom: 10),
+            padding: const EdgeInsets.only(
+                left: 20, right: 20, top: 8, bottom: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(Bots, style: blackBoldTextStyle(18), textAlign: TextAlign.center,),
-                SizedBox(height: 10,),
+                Text(
+                  Bots,
+                  style: blackBoldTextStyle(18),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(
+                  height: 10,
+                ),
                 Container(
-                  width: size.width-40,
+                  width: size.width - 40,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                    borderRadius:
+                    BorderRadius.all(Radius.circular(12)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.grey.withOpacity(0.2),
                         spreadRadius: 2,
                         blurRadius: 5,
-                        offset: Offset(0, 1), // changes position of shadow
+                        offset: Offset(
+                            0, 1), // changes position of shadow
                       ),
                     ],
                   ),
@@ -130,9 +185,11 @@ class _BotListScreenState extends State<BotListScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
+                        padding: const EdgeInsets.only(
+                            left: 20, right: 20, top: 10, bottom: 10),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment:
+                          CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Bot Revenue Insights',
@@ -148,8 +205,10 @@ class _BotListScreenState extends State<BotListScreen> {
                               width: double.infinity,
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment:
+                                CrossAxisAlignment.center,
                                 spacing: 5,
                                 children: [
                                   Text.rich(
@@ -158,19 +217,24 @@ class _BotListScreenState extends State<BotListScreen> {
                                         TextSpan(
                                           text: 'Active : ',
                                           style: TextStyle(
-                                            color: const Color(0xFF475569),
+                                            color: const Color(
+                                                0xFF475569),
                                             fontSize: 10,
                                             fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
+                                            fontWeight:
+                                            FontWeight.w400,
                                           ),
                                         ),
                                         TextSpan(
-                                          text: '12',
+                                          text: statsInfo?['active'] ??
+                                              "0",
                                           style: TextStyle(
-                                            color: const Color(0xFF039855) /* Success-600 */,
+                                            color: const Color(
+                                                0xFF039855), /* Success-600 */
                                             fontSize: 10,
                                             fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w600,
+                                            fontWeight:
+                                            FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -188,19 +252,24 @@ class _BotListScreenState extends State<BotListScreen> {
                                         TextSpan(
                                           text: 'Sell only : ',
                                           style: TextStyle(
-                                            color: const Color(0xFF475569),
+                                            color: const Color(
+                                                0xFF475569),
                                             fontSize: 10,
                                             fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
+                                            fontWeight:
+                                            FontWeight.w400,
                                           ),
                                         ),
                                         TextSpan(
-                                          text: '6',
+                                          text: statsInfo?['sell_only'] ??
+                                              "0",
                                           style: TextStyle(
-                                            color: const Color(0xFFFF9500) /* Colors-Orange */,
+                                            color: const Color(
+                                                0xFFFF9500), /* Colors-Orange */
                                             fontSize: 10,
                                             fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w600,
+                                            fontWeight:
+                                            FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -218,19 +287,24 @@ class _BotListScreenState extends State<BotListScreen> {
                                         TextSpan(
                                           text: 'Inactive : ',
                                           style: TextStyle(
-                                            color: const Color(0xFF475569),
+                                            color: const Color(
+                                                0xFF475569),
                                             fontSize: 10,
                                             fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w400,
+                                            fontWeight:
+                                            FontWeight.w400,
                                           ),
                                         ),
                                         TextSpan(
-                                          text: '4',
+                                          text: statsInfo?['inactive'] ??
+                                              "0",
                                           style: TextStyle(
-                                            color: const Color(0xFFFF3B30) /* Colors-Red */,
+                                            color: const Color(
+                                                0xFFFF3B30), /* Colors-Red */
                                             fontSize: 10,
                                             fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w600,
+                                            fontWeight:
+                                            FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -243,276 +317,60 @@ class _BotListScreenState extends State<BotListScreen> {
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.only(right: 48),
-                        width: double.infinity,
-                        height: 41,
-                        color: const Color(0xFFF1F5F9),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          spacing: 5,
+                      // ... existing title "Bot Revenue Insights"
+                      SizedBox(height: 10),
+
+
+// NEW GRID VIEW REPLACING OLD TABLE
+            // NEW GRID VIEW REPLACING OLD TABLE
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10), // Adds the "Outer Space"
+                        child: Column(
                           children: [
-                            Text(
-                              'Profile',
-                              style: TextStyle(
-                                color: const Color(0xFF334155),
-                                fontSize: 12,
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w500,
+                            GridView.count(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: 2,
+                              childAspectRatio: 2.4, // Adjust this to make cards shorter or taller
+                              mainAxisSpacing: 10,
+                              crossAxisSpacing: 10,
+                              children: [
+                                _buildInsightCard("Today", revenueInsights?['today']),
+                                _buildInsightCard("Yesterday", "-"),
+                                _buildInsightCard("Last 7 Days", revenueInsights?['last_7_days']),
+                                _buildInsightCard("Last 30 Days", revenueInsights?['last_30_days']),
+                                _buildInsightCard("Non-Deleted Total", revenueInsights?['total']),
+                                _buildInsightCard("Deleted Bots Total", revenueInsights?['deleted_bots_total']),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Full width Grand Total Card
+                            SizedBox(
+                              width: double.infinity,
+                              child: _buildInsightCard(
+                                  "Grand Total",
+                                  revenueInsights?['grand_total'],
+                                  isGrandTotal: true
                               ),
                             ),
-                            Text(
-                              'Deleted bots',
-                              style: TextStyle(
-                                color: const Color(0xFF334155),
-                                fontSize: 12,
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              'Grand Total',
-                              style: TextStyle(
-                                color: const Color(0xFF334155),
-                                fontSize: 12,
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            //SizedBox(width: 0,)
                           ],
                         ),
                       ),
-                      Container(
-                        //padding: const EdgeInsets.only(left: 10, right: 10),
-                        width: double.infinity,
-                        height: 41,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: const Border(
-                            bottom: BorderSide(width: 1, color: colorE2E8F0),
-                            top: BorderSide(width: 2, color: colorE2E8F0),
-                          ),
-                          //borderRadius: BorderRadius.circular(12), // Optional, if you want rounding
-                        ),
-                        child: Row(
-                          children: [
-                            //SizedBox(width: 10,),
-                            Expanded(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                spacing: 5,
-                                children: [
-                                  Row(
-                                    //crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      SizedBox(width: 10,),
-                                      Container(child: Image.asset(icUsdc),height: 20, width: 20,),
-                                      SizedBox(width: 5,),
-                                      Text(
-                                        'USDC',
-                                        style: TextStyle(
-                                          color: const Color(0xFF334155),
-                                          fontSize: 12,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(
-                                    '-',
-                                    style: TextStyle(
-                                      color: const Color(0xFF334155),
-                                      fontSize: 12,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    '-',
-                                    style: TextStyle(
-                                      color: const Color(0xFF334155),
-                                      fontSize: 12,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  SizedBox(width: 5,)
-                                ],
-                              ),
-                            ),
-                            Container(
-                              height: 41,
-                              width: 41,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: const Border(
-                                  left: BorderSide(width: 1, color: colorE2E8F0),
-                                ),
-                                //borderRadius: BorderRadius.circular(12), // Optional, if you want rounding
-                              ),
-                              child: Center(child: Icon(Icons.keyboard_arrow_down, size: 30, color: color475569.withAlpha(95))),
-                            )
-                          ],
-                        ),
-                      ),
-                      Container(
-                        //padding: const EdgeInsets.only(left: 10, right: 10),
-                        width: double.infinity,
-                        height: 41,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: const Border(
-                            bottom: BorderSide(width: 1, color: colorE2E8F0),
-                          ),
-                          //borderRadius: BorderRadius.circular(12), // Optional, if you want rounding
-                        ),
-                        child: Row(
-                          children: [
-                            //SizedBox(width: 10,),
-                            Expanded(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                spacing: 5,
-                                children: [
-                                  Row(
-                                    //crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      SizedBox(width: 10,),
-                                      Container(child: Image.asset(icUsdcT),height: 20, width: 20,),
-                                      SizedBox(width: 5,),
-                                      Text(
-                                        'USDC',
-                                        style: TextStyle(
-                                          color: const Color(0xFF334155),
-                                          fontSize: 12,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(
-                                    '1520.65',
-                                    style: TextStyle(
-                                      color: const Color(0xFF334155),
-                                      fontSize: 12,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    '2227.60',
-                                    style: TextStyle(
-                                      color: const Color(0xFF334155),
-                                      fontSize: 12,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  SizedBox(width: 5,)
-                                ],
-                              ),
-                            ),
-                            Container(
-                              height: 41,
-                              width: 41,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: const Border(
-                                  left: BorderSide(width: 1, color: colorE2E8F0),
-                                ),
-                                //borderRadius: BorderRadius.circular(12), // Optional, if you want rounding
-                              ),
-                              child: Center(child: Icon(Icons.keyboard_arrow_down, size: 30, color: color475569.withAlpha(95))),
-                            )
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: double.infinity,
-                        height: 41,
-                        color: Colors.transparent,
-                        child: Row(
-                          children: [
-                            //SizedBox(width: 10,),
-                            Expanded(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                spacing: 5,
-                                children: [
-                                  Row(
-                                    children: [
-                                      SizedBox(width: 10,),
-                                      //Container(height: 20, width: 5,),
-                                      //SizedBox(width: 5,),
-                                      Text(
-                                        'Total Profit',
-                                        style: TextStyle(
-                                          color: const Color(0xFF475569),
-                                          fontSize: 12,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(
-                                    '1520.65',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: const Color(0xFF475569),
-                                      fontSize: 12,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  Text(
-                                    '2227.60',
-                                    textAlign: TextAlign.right,
-                                    style: TextStyle(
-                                      color: const Color(0xFF475569),
-                                      fontSize: 12,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  SizedBox(width: 5,)
-                                ],
-                              ),
-                            ),
-                            Container(
-                              height: 41,
-                              width: 41,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: const Border(
-                                  left: BorderSide(width: 0, color: Colors.white),
-                                ),
-                                //borderRadius: BorderRadius.circular(12), // Optional, if you want rounding
-                              ),
-                              //child: Center(child: Icon(Icons.keyboard_arrow_down, size: 30, color: color475569.withAlpha(95))),
-                            )
-                          ],
-                        ),
-                      ),
+                      const SizedBox(height: 15),
+
                     ],
                   ),
                 ),
-                SizedBox(height: 20,),
+                SizedBox(
+                  height: 20,
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Expanded(child: Text(BotCollection, style: blackBoldTextStyle(16))),
+                    Expanded(
+                        child: Text(BotCollection,
+                            style: blackBoldTextStyle(16))),
                     Container(
                       width: 20,
                       height: 20,
@@ -526,10 +384,12 @@ class _BotListScreenState extends State<BotListScreen> {
                     ),
                     SizedBox(width: 20),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: ShapeDecoration(
                         color: colorPrimary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -537,8 +397,13 @@ class _BotListScreenState extends State<BotListScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         //spacing: 6,
                         children: [
-                          Icon(Icons.add, color: Colors.white,),
-                          SizedBox(width: 3,),
+                          Icon(
+                            Icons.add,
+                            color: Colors.white,
+                          ),
+                          SizedBox(
+                            width: 3,
+                          ),
                           Text(
                             CreateBot,
                             style: TextStyle(
@@ -553,7 +418,9 @@ class _BotListScreenState extends State<BotListScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 20,),
+                SizedBox(
+                  height: 20,
+                ),
 
                 ///Table
 
@@ -561,15 +428,27 @@ class _BotListScreenState extends State<BotListScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
                   itemBuilder: (context, index) {
-                    var notificationInfo = namesArr[index];
-                    double percentage = -50.15; // example value
-                    double price = 1481.71;
+                    final bot = bots[index];
 
+                    double price = bot.totalProfit;
+                    double percentage = bot.todayProfit;
+                    String lastTrade = bot.lastTrade;
+
+                    String type = "";
+                    String description = "";
+
+                    if (lastTrade.isNotEmpty) {
+                      final parts = lastTrade.split(" ");
+                      type = parts.first; // BUY or SELL
+                      description =
+                          lastTrade.replaceFirst("$type ", "");
+                    }
                     return GestureDetector(
                       onTap: () {
                         Navigator.pushNamed(
                           context,
                           RouteGenerator.botInsightScreen,
+                          arguments: bot.id,
                         );
                       },
                       child: Column(
@@ -596,18 +475,39 @@ class _BotListScreenState extends State<BotListScreen> {
                             ),
                             child: Row(
                               children: [
-                                Expanded(child: Row(
-                                  children: [
-                                    SizedBox(width: 10,),
-                                    Icon(Icons.check_box, size: 20, color: Colors.white),
-                                    SizedBox(width: 10,),
-                                    Text("ETH", style: blackBoldTextStyle(16)),
-                                  ],
-                                )),
-                                Text(Active, style: textStylew600(14,color26A17B)),
-                                SizedBox(width: 15,),
-                                Icon(Icons.more_vert, size: 25, color: color475569,),
-                                SizedBox(width: 10,),
+                                Expanded(
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 10,
+                                        ),
+                                        Icon(Icons.check_box,
+                                            size: 20,
+                                            color: Colors.white),
+                                        SizedBox(
+                                          width: 10,
+                                        ),
+                                        Text(bot.title,
+                                            style:
+                                            blackBoldTextStyle(16)),
+                                      ],
+                                    )),
+                                Text(
+                                  bot.status,
+                                  style: textStylew600(
+                                    14,
+                                    bot.status == "Active"
+                                        ? color26A17B
+                                        : Colors.red,
+                                  ),
+                                ),
+                                SizedBox(width: 15),
+                                Icon(
+                                  Icons.more_vert,
+                                  size: 25,
+                                  color: color475569,
+                                ),
+                                SizedBox(width: 10),
                               ],
                             ),
                           ),
@@ -626,11 +526,11 @@ class _BotListScreenState extends State<BotListScreen> {
                                   color: Colors.grey.withOpacity(0.2),
                                   spreadRadius: 2,
                                   blurRadius: 5,
-                                  offset: Offset(0, 1), // changes position of shadow
+                                  offset: Offset(0,
+                                      1), // changes position of shadow
                                 )
                               ],
                             ),
-
                             child: Column(
                               children: [
                                 Row(
@@ -638,41 +538,59 @@ class _BotListScreenState extends State<BotListScreen> {
                                     Container(
                                       width: 65,
                                       height: 60,
-                                      padding: EdgeInsets.only(left: 10, top: 15),
+                                      padding: EdgeInsets.only(
+                                          left: 10, top: 15),
                                       child: Stack(
                                         children: [
                                           Positioned(
                                             left: 0,
                                             top: 0,
-                                            child: Container(child: Image.asset(icUsdc, width: 35, height: 35)),
+                                            child: Container(
+                                                child: Image.asset(
+                                                    icUsdc,
+                                                    width: 35,
+                                                    height: 35)),
                                           ),
                                           Positioned(
                                             left: 20,
                                             top: 0,
-                                            child: Container(child: Image.asset(icUsdcT, width: 35, height: 35)),
+                                            child: Container(
+                                                child: Image.asset(
+                                                    icUsdcT,
+                                                    width: 35,
+                                                    height: 35)),
                                           ),
-
-
                                         ],
                                       ),
                                     ),
-                                    SizedBox(width: 10,),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
                                     Container(
-                                      padding: EdgeInsets.only(top: 10),
+                                      padding:
+                                      EdgeInsets.only(top: 10),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                         children: [
-                                          Text('ETH/USDT', style: textStylew600(14,color1E293B)),
-                                          // Text('1481.71', style: textStylew600(14,color94A3C1)),
+                                          Text(bot.coinPair,
+                                              style: textStylew600(
+                                                  14, color1E293B)),
                                           Row(
-                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            crossAxisAlignment:
+                                            CrossAxisAlignment
+                                                .end,
                                             children: [
                                               Text(
-                                                price.toStringAsFixed(2),
+                                                bot.totalProfit
+                                                    .toStringAsFixed(
+                                                    2),
                                                 style: TextStyle(
                                                   fontSize: 22,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: const Color(0xFF1E293B),
+                                                  fontWeight:
+                                                  FontWeight.w700,
+                                                  color: const Color(
+                                                      0xFF1E293B),
                                                 ),
                                               ),
                                               SizedBox(width: 6),
@@ -680,42 +598,64 @@ class _BotListScreenState extends State<BotListScreen> {
                                                 children: [
                                                   Icon(
                                                     percentage < 0
-                                                        ? Icons.arrow_downward
-                                                        : Icons.arrow_upward,
+                                                        ? Icons
+                                                        .arrow_downward
+                                                        : Icons
+                                                        .arrow_upward,
                                                     size: 14,
-                                                    color: percentage < 0
-                                                        ? const Color(0xFFFD381E)
-                                                        : const Color(0xFF26A17B),
+                                                    color: percentage <
+                                                        0
+                                                        ? const Color(
+                                                        0xFFFD381E)
+                                                        : const Color(
+                                                        0xFF26A17B),
                                                   ),
                                                   SizedBox(width: 2),
                                                   Text(
                                                     '${percentage.abs().toStringAsFixed(2)}%',
                                                     style: TextStyle(
                                                       fontSize: 14,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: percentage < 0
-                                                          ? const Color(0xFFFD381E)
-                                                          : const Color(0xFF26A17B),
+                                                      fontWeight:
+                                                      FontWeight
+                                                          .w600,
+                                                      color: percentage <
+                                                          0
+                                                          ? const Color(
+                                                          0xFFFD381E)
+                                                          : const Color(
+                                                          0xFF26A17B),
                                                     ),
                                                   ),
                                                 ],
                                               ),
                                             ],
                                           )
-
-
-
-                            ],
+                                        ],
                                       ),
                                     ),
                                     Expanded(
                                       child: Container(
-                                        padding: EdgeInsets.only(right: 15),
+                                        padding:
+                                        EdgeInsets.only(right: 15),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.end,
                                           children: [
-                                            Text('N/A', style: textStylew600(12,color475569)),
-                                            Text("Today's Profit", style: textStylew600(12,colorBlack)),
+                                            Text(
+                                              bot.todayProfit
+                                                  .toStringAsFixed(2),
+                                              style: textStylew600(
+                                                12,
+                                                bot.todayProfit >= 0
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Today's Profit",
+                                              style: textStylew600(
+                                                  12, colorBlack),
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -727,39 +667,35 @@ class _BotListScreenState extends State<BotListScreen> {
                                   width: double.infinity,
                                   child: Column(
                                     children: [
-                                      Row(
+                                      // ====================================
+                                      // SYNCED BADGES USING WRAP
+                                      // Prevents overflow by intelligently wrapping
+                                      // ====================================
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        alignment: WrapAlignment.start,
                                         children: [
-                                          Flexible(
-                                            flex: 1, // 👈 Bigger width
-                                            child: badge(
-                                              text: "Custom MAS",
-                                              icon: icBullseye,
-                                              bgColor: const Color(0xFFFFF4D6),
-                                              textColor: const Color(0xFFB54708),
-                                              borderColor: const Color(0xFFFEC84B),
-                                            ),
+                                          badge(
+                                            text: "${bot.strategy} ${bot.strategyType}",
+                                            icon: icBullseye,
+                                            bgColor: const Color(0xFFFFF4D6),
+                                            textColor: const Color(0xFFB54708),
+                                            borderColor: const Color(0xFFFEC84B),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Flexible(
-                                            flex: 0, // 👈 Smaller
-                                            child: badge(
-                                              text: "Upstox",
-                                              icon: icBitcoin,
-                                              bgColor: const Color(0xFFEDE9FE),
-                                              textColor: const Color(0xFF6941C6),
-                                              borderColor: const Color(0xFFD6BBFB),
-                                            ),
+                                          badge(
+                                            text: "${bot.exchange}",
+                                            icon: icBitcoin,
+                                            bgColor: const Color(0xFFEDE9FE),
+                                            textColor: const Color(0xFF6941C6),
+                                            borderColor: const Color(0xFFD6BBFB),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Flexible(
-                                            flex: 0, // 👈 Smaller
-                                            child: badge(
-                                              text: "Single",
-                                              icon: icArrowsRotate,
-                                              bgColor: const Color(0xFFE0F2FE),
-                                              textColor: const Color(0xFF0369A1),
-                                              borderColor: const Color(0xFFBAE6FD),
-                                            ),
+                                          badge(
+                                            text: "${bot.cycleType}",
+                                            icon: icArrowsRotate,
+                                            bgColor: const Color(0xFFE0F2FE),
+                                            textColor: const Color(0xFF0369A1),
+                                            borderColor: const Color(0xFFBAE6FD),
                                           ),
                                         ],
                                       ),
@@ -770,7 +706,9 @@ class _BotListScreenState extends State<BotListScreen> {
                                       SizedBox(
                                         width: double.infinity,
                                         child: badge(
-                                          text: "Hardik Bot",
+                                          text: bot.category.isNotEmpty
+                                              ? "${bot.category}"
+                                              : bot.category,
                                           icon: icBullseyeArrow,
                                           bgColor: const Color(0xFFF2F4F7),
                                           textColor: const Color(0xFF344054),
@@ -782,12 +720,13 @@ class _BotListScreenState extends State<BotListScreen> {
                                 ),
                                 divider(),
 
-                                /// SUMMARY CARDS WITH PROPER SIDE SPACING
+                                /// SUMMARY CARDS WITH SYNCED SPACING
+                                /// Replaced Flexible with Expanded to strictly divide by 3
                                 Padding(
                                   padding: const EdgeInsets.all(10),
                                   child: Row(
                                     children: [
-                                      Flexible(
+                                      Expanded(
                                         child: summaryCard(
                                           title: "REALIZED",
                                           value: "₹674",
@@ -796,7 +735,7 @@ class _BotListScreenState extends State<BotListScreen> {
                                       ),
                                       const SizedBox(width: 8),
 
-                                      Flexible(
+                                      Expanded(
                                         child: summaryCard(
                                           title: "UNREIZED",
                                           value: "₹-30482",
@@ -805,7 +744,7 @@ class _BotListScreenState extends State<BotListScreen> {
                                       ),
                                       const SizedBox(width: 8),
 
-                                      Flexible(
+                                      Expanded(
                                         child: summaryCard(
                                           title: "NET P/L",
                                           value: "₹-29808",
@@ -817,14 +756,14 @@ class _BotListScreenState extends State<BotListScreen> {
                                 ),
                                 const SizedBox(height: 16),
 
-                                capitalGrowthCard(),
+                                capitalGrowthCard(bot),
 
                                 const SizedBox(height: 12),
 
                                 tradeInfoCard(
                                   label: "LAST:",
-                                  type: "BUY",
-                                  description: "C3 148D ago at Price ₹1322",
+                                  type: type,
+                                  description: description,
                                 ),
 
                                 const SizedBox(height: 12),
@@ -835,186 +774,20 @@ class _BotListScreenState extends State<BotListScreen> {
                                   description: "C4 at Price < ₹1295.76",
                                 ),
 
-                                // Container(
-                                //   width: double.infinity,
-                                //   padding: EdgeInsets.only(left: 10, right: 10, top: 10),
-                                //   child: Row(
-                                //     children: [
-                                //       Expanded(
-                                //         child: Container(
-                                //           width: 107,
-                                //           child: Column(
-                                //             mainAxisSize: MainAxisSize.min,
-                                //             mainAxisAlignment: MainAxisAlignment.start,
-                                //             crossAxisAlignment: CrossAxisAlignment.start,
-                                //             spacing: 4,
-                                //             children: [
-                                //               Text(
-                                //                 'Profit',
-                                //                 style: TextStyle(
-                                //                   color: const Color(0x99475569),
-                                //                   fontSize: 12,
-                                //                   fontFamily: 'Inter',
-                                //                   fontWeight: FontWeight.w400,
-                                //                 ),
-                                //               ),
-                                //               Text(
-                                //                 '166.30',
-                                //                 textAlign: TextAlign.right,
-                                //                 style: TextStyle(
-                                //                   color: const Color(0xFF26A17B),
-                                //                   fontSize: 20,
-                                //                   fontFamily: 'Inter',
-                                //                   fontWeight: FontWeight.w600,
-                                //                 ),
-                                //               ),
-                                //             ],
-                                //           ),
-                                //         ),
-                                //       ),
-                                //       Column(
-                                //         mainAxisSize: MainAxisSize.min,
-                                //         mainAxisAlignment: MainAxisAlignment.start,
-                                //         crossAxisAlignment: CrossAxisAlignment.end,
-                                //         spacing: 6,
-                                //         children: [
-                                //           Text(
-                                //             'Market Vs Average',
-                                //             style: TextStyle(
-                                //               color: const Color(0x99475569) /* Sidebar-icon */,
-                                //               fontSize: 11,
-                                //               fontFamily: 'Inter',
-                                //               fontWeight: FontWeight.w400,
-                                //             ),
-                                //           ),
-                                //           Row(
-                                //             mainAxisSize: MainAxisSize.min,
-                                //             mainAxisAlignment: MainAxisAlignment.start,
-                                //             crossAxisAlignment: CrossAxisAlignment.center,
-                                //             spacing: 5,
-                                //             children: [
-                                //               Container(child: Image.asset(icRedArrow, width: 23, height: 16)),
-                                //               Text(
-                                //                 '-50.15%',
-                                //                 style: TextStyle(
-                                //                   color: const Color(0xFFFD381E),
-                                //                   fontSize: 18,
-                                //                   fontFamily: 'Inter',
-                                //                   fontWeight: FontWeight.w500,
-                                //                 ),
-                                //               ),
-                                //             ],
-                                //           ),
-                                //         ],
-                                //       )
-                                //     ],
-                                //   ),
-                                // ),
-
                                 Container(
                                   width: double.infinity,
-                                  padding: EdgeInsets.only(left: 10, right: 10, top: 10),
+                                  padding: EdgeInsets.only(
+                                      left: 10, right: 10, top: 10),
                                   color: colorFAFAFA,
                                   child: Column(
-                                    children: [
-                                      Row(
-                                        // children: [
-                                        //   Expanded(
-                                        //     child:
-                                        //     Text('${TodayProfit} (9h:19m)', style: blackNormalTextStyle(12,color475569)),
-                                        //   ),
-                                        //   Row(
-                                        //     spacing: 5,
-                                        //     children: [
-                                        //       Container(child: Image.asset(icUsdcT),height: 15, width: 15,),
-                                        //       Text('-', style: blackNormalTextStyle(12,color334155)),
-                                        //     ],
-                                        //   ),
-                                        // ],
-                                      ),
-                                      // divider(),
-                                      // Row(
-                                      //   children: [
-                                      //     Expanded(
-                                      //       child: Text(InitialCapital, style: blackNormalTextStyle(12,color475569)),
-                                      //     ),
-                                      //     Row(
-                                      //       spacing: 5,
-                                      //       children: [
-                                      //         Container(child: Image.asset(icUsdcT),height: 15, width: 15,),
-                                      //         Text('2000.00', style: blackNormalTextStyle(12,color334155)),
-                                      //       ],
-                                      //     ),
-                                      //   ],
-                                      // ),
-                                      // divider(),
-                                      // Row(
-                                      //   children: [
-                                      //     Expanded(
-                                      //       child: Text(CurrentCapital, style: blackNormalTextStyle(12,color475569)),
-                                      //     ),
-                                      //     Row(
-                                      //       spacing: 5,
-                                      //       children: [
-                                      //         Container(child: Image.asset(icUsdcT),height: 15, width: 15,),
-                                      //         Text('2166.30', style: blackNormalTextStyle(12,color334155)),
-                                      //       ],
-                                      //     ),
-                                      //   ],
-                                      // ),
-                                      // divider(),
-                                      // Row(
-                                      //   children: [
-                                      //     Expanded(
-                                      //       child: Text(AvailableQuoteCoins, style: blackNormalTextStyle(12,color475569)),
-                                      //     ),
-                                      //     Row(
-                                      //       spacing: 5,
-                                      //       children: [
-                                      //         Container(child: Image.asset(icUsdcT),height: 15, width: 15,),
-                                      //         Text('993.62', style: blackNormalTextStyle(12,color334155)),
-                                      //       ],
-                                      //     ),
-                                      //   ],
-                                      // ),
-                                      // divider(),
-                                      // Row(
-                                      //   children: [
-                                      //     Expanded(
-                                      //       child: Text(Runtime, style: blackNormalTextStyle(12,color475569)),
-                                      //     ),
-                                      //     Row(
-                                      //       spacing: 5,
-                                      //       children: [
-                                      //         Icon(Icons.access_time, size: 17, color: Colors.grey,),
-                                      //         Text('144D 23H 17M', style: blackNormalTextStyle(12,color334155)),
-                                      //       ],
-                                      //     ),
-                                      //   ],
-                                      // ),
-                                      // divider(),
-                                      // Row(
-                                      //   children: [
-                                      //     Expanded(
-                                      //       child: Text(LastTrade, style: blackNormalTextStyle(12,color475569)),
-                                      //     ),
-                                      //     Row(
-                                      //       spacing: 5,
-                                      //       children: [
-                                      //         //Container(child: Image.asset(icUsdcT),height: 15, width: 15,),
-                                      //         Text('BUY C9 15D ago', style: blackNormalTextStyle(12,color334155)),
-                                      //       ],
-                                      //     ),
-                                      //   ],
-                                      // ),
-                                      // SizedBox(height: 10,)
-                                    ],
+                                    children: [],
                                   ),
                                 ),
                                 Container(
                                   height: 50,
                                   width: double.infinity,
-                                  padding: EdgeInsets.only(left: 10, right: 10),
+                                  padding: EdgeInsets.only(
+                                      left: 10, right: 10),
                                   decoration: ShapeDecoration(
                                     color: Colors.white,
                                     shape: RoundedRectangleBorder(
@@ -1025,11 +798,12 @@ class _BotListScreenState extends State<BotListScreen> {
                                     ),
                                   ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.center,
                                     spacing: 5,
                                     children: [
                                       Text(
-                                        'Bot ID: 107543',
+                                        'Bot ID: ${bot.id}',
                                         textAlign: TextAlign.right,
                                         style: TextStyle(
                                           color: const Color(0x99475569),
@@ -1038,7 +812,11 @@ class _BotListScreenState extends State<BotListScreen> {
                                           fontWeight: FontWeight.w400,
                                         ),
                                       ),
-                                      Icon(Icons.copy, size: 14, color: Colors.grey,)
+                                      Icon(
+                                        Icons.copy,
+                                        size: 14,
+                                        color: Colors.grey,
+                                      )
                                     ],
                                   ),
                                 )
@@ -1049,23 +827,61 @@ class _BotListScreenState extends State<BotListScreen> {
                       ),
                     );
                   },
-                  itemCount: namesArr.length,
-                  //reverse: true,
-                  //itemExtent: 100,
+                  itemCount: bots.length,
                   scrollDirection: Axis.vertical,
                   separatorBuilder: (context, index) {
                     return Divider(
                       color: Colors.transparent,
                       height: 10,
-                      //thickness: 0.5,
                     );
                   },
                 ),
-
               ],
             ),
           ),
-        )
+        ));
+  }
+  Widget _buildInsightCard(String title, dynamic value, {bool isGrandTotal = false}) {
+    return Container(
+      // height: 75, // Controls the "bigness" of the card
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isGrandTotal ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(10), // Matches your primary UI rounding
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF3B82F6).withOpacity(0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isGrandTotal ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value?.toString() ?? '0',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: isGrandTotal ? Colors.white : const Color(0xFF1E293B),
+            ),
+          ),
+        ],
+      ),
     );
   }
   Widget badge({
@@ -1083,6 +899,7 @@ class _BotListScreenState extends State<BotListScreen> {
         border: Border.all(color: borderColor),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min, // Added to play nicely with Wrap
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image.asset(icon, width: 16, height: 16),
@@ -1102,7 +919,6 @@ class _BotListScreenState extends State<BotListScreen> {
 
   Widget divider() {
     return Container(
-      //width: double.infinity,
       margin: EdgeInsets.only(bottom: 10, top: 10),
       decoration: ShapeDecoration(
         shape: RoundedRectangleBorder(
@@ -1115,6 +931,7 @@ class _BotListScreenState extends State<BotListScreen> {
       ),
     );
   }
+
   Widget summaryCard({
     required String title,
     required String value,
@@ -1139,23 +956,28 @@ class _BotListScreenState extends State<BotListScreen> {
         children: [
           Row(
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
-                  letterSpacing: 0.5,
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12, // Adjusted slightly for smaller screens
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
-              const SizedBox(width: 4),
-              const Icon(Icons.info_outline,
-                  size: 14, color: Color(0xFF94A3B8)),
+              const SizedBox(width: 2),
+              const Icon(Icons.info_outline, size: 14, color: Color(0xFF94A3B8)),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis, // Ensures large numbers don't break layout
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -1166,9 +988,20 @@ class _BotListScreenState extends State<BotListScreen> {
       ),
     );
   }
-  Widget capitalGrowthCard() {
+
+  Widget capitalGrowthCard(BotModel bot) {
+    double growthPercent = 0;
+
+    if (bot.initialCapital > 0) {
+      growthPercent =
+          ((bot.currentCapital - bot.initialCapital) / bot.initialCapital) *
+              100;
+    }
+
+    bool isPositive = growthPercent >= 0;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10), // 👈 OUTER SPACING
+      margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
@@ -1183,9 +1016,7 @@ class _BotListScreenState extends State<BotListScreen> {
         ],
       ),
       child: Column(
-        // crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           /// Top Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1200,21 +1031,23 @@ class _BotListScreenState extends State<BotListScreen> {
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: const [
+                children: [
                   Text(
-                    "₹4.01L",
-                    style: TextStyle(
+                    "₹${bot.currentCapital.toStringAsFixed(2)}",
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1E293B),
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    "+0.17% from ₹4L",
+                    "${isPositive ? '+' : ''}${growthPercent.toStringAsFixed(2)}% from ₹${bot.initialCapital.toStringAsFixed(2)}",
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF22C55E),
+                      color: isPositive
+                          ? const Color(0xFF22C55E)
+                          : const Color(0xFFEF4444),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1230,16 +1063,16 @@ class _BotListScreenState extends State<BotListScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                children: const [
-                  Icon(
+                children: [
+                  const Icon(
                     Icons.access_time,
                     size: 18,
                     color: Color(0xFF38BDF8),
                   ),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text(
-                    "418D 5H 32M",
-                    style: TextStyle(
+                    bot.runtime,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: Color(0xFF38BDF8),
@@ -1247,29 +1080,33 @@ class _BotListScreenState extends State<BotListScreen> {
                   ),
                 ],
               ),
-              const Text(
-                "Available: ₹3,21,074.35",
+              Text(
+                "Available: ₹${bot.availableQuoteCoins.toStringAsFixed(2)}",
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
+                  color: bot.availableQuoteCoins >= 0
+                      ? Colors.black
+                      : Colors.red,
                 ),
               ),
             ],
           ),
-
-
         ],
       ),
     );
   }
+
   Widget tradeInfoCard({
     required String label,
     required String type,
     required String description,
   }) {
+    bool isBuy = type.toUpperCase() == "BUY";
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10), // 👈 OUTER SPACING
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
@@ -1284,34 +1121,55 @@ class _BotListScreenState extends State<BotListScreen> {
       ),
       child: Row(
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF64748B),
+          // ====================================
+          // FIXED WIDTH LABEL FOR ALIGNMENT
+          // Forces the following chips to start precisely at the same spot
+          // ====================================
+          SizedBox(
+            width: 50,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
             ),
           ),
           const SizedBox(width: 8),
 
-          const Chip(
-            label: Text("BUY"),
-            backgroundColor: Color(0xFFD1FAE5),
+          /// Dynamic Chip
+          Container(
+            width: 55, // Fixed width so text descriptions follow cleanly
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: isBuy ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              type,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isBuy ? const Color(0xFF065F46) : const Color(0xFF991B1B),
+              ),
+            ),
           ),
 
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
 
           Expanded(
             child: Text(
               description,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis, // 👈 keeps single line
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF334155),
+              ),
             ),
           ),
         ],
       ),
-
     );
   }
-
-
 }

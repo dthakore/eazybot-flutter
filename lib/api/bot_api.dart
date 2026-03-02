@@ -7,7 +7,7 @@ class BotApi {
       headers: {
         "Accept": "application/json",
         "Authorization":
-            "Bearer 2|dys7J6wdDCbCD40zxRejJViv2x1f5aI3Oom18vmJe24dd9d5",
+            "Bearer 14|Ty0oeH0sKTDEG3BcywG4sDaA00K0gnYtrEkb1ztOae1db13b",
       },
     ),
   );
