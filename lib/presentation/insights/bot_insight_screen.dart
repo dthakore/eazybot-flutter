@@ -188,42 +188,52 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
     print("Bot Data: $botData");
 
     print("Bot Session Data: $botsessionData");
-
     int sessionid = 0;
     var session_created_at = "";
     var updated_at = "";
     int session_trades_closed = 0;
-    int opening_price = 0;
-    double session_profit = 0;
+    double opening_price = 0.0;
+    double session_profit = 0.0;
     int total_volume = 0;
-    double moving_average_percentage = 0;
-    double profit_to_ap = 0;
-    double average_price = 0;
-    double balance_assigned = 0;
-    double balance_available = 0;
-    double balance_in_trade = 0;
+    double moving_average_percentage = 0.0;
+    double profit_to_ap = 0.0;
+    double average_price = 0.0;
+    double balance_assigned = 0.0;
+    double balance_available = 0.0;
+    double balance_in_trade = 0.0;
     int mcr_balance_assigned = 0;
-    double market_vs_moving_difference = 0;
+    double market_vs_moving_difference = 0.0;
 
     var sessionruntime = "";
+
+    double toDouble(value) => (value as num?)?.toDouble() ?? 0.0;
+    int toInt(value) => (value as num?)?.toInt() ?? 0;
+
     if (botsessionData != null && botsessionData!.isNotEmpty) {
       final session = botsessionData![0];
-      sessionid = session["id"] ?? 0;
+
+      sessionid = toInt(session["id"]);
 
       session_created_at = session["created_at"] ?? "";
       updated_at = session["updated_at"] ?? "";
-      session_trades_closed = session["trades_closed"] ?? 0;
-      opening_price = session["opening_price"] ?? 0;
-      session_profit = session["session_profit"] ?? 0;
-      total_volume = session["total_volume"] ?? 0;
-      moving_average_percentage = session["moving_average_percentage"] ?? 0;
-      profit_to_ap = session["profit_to_ap"] ?? 0;
-      average_price = session["average_price"] ?? 0;
-      balance_assigned = session["balance_assigned"] ?? 0;
-      balance_available = session["balance_available"] ?? 0;
-      balance_in_trade = session["balance_in_trade"] ?? 0;
-      mcr_balance_assigned = session["mcr_balance_assigned"] ?? 0;
-      market_vs_moving_difference = session["market_vs_moving_difference"] ?? 0;
+
+      session_trades_closed = toInt(session["trades_closed"]);
+      opening_price = toDouble(session["opening_price"]);
+      session_profit = toDouble(session["session_profit"]);
+      total_volume = toInt(session["total_volume"]);
+      moving_average_percentage = toDouble(
+        session["moving_average_percentage"],
+      );
+      profit_to_ap = toDouble(session["profit_to_ap"]);
+      average_price = toDouble(session["average_price"]);
+      balance_assigned = toDouble(session["balance_assigned"]);
+      balance_available = toDouble(session["balance_available"]);
+      balance_in_trade = toDouble(session["balance_in_trade"]);
+      mcr_balance_assigned = toInt(session["mcr_balance_assigned"]);
+      market_vs_moving_difference = toDouble(
+        session["market_vs_moving_difference"],
+      );
+
       sessionruntime = session["runtime"] ?? "";
     }
     return Scaffold(
@@ -579,7 +589,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                           side: BorderSide(
                             width: 0.5,
                             strokeAlign: BorderSide.strokeAlignCenter,
-                            color: colorE2E8F0,
+                            color: colorCC475569,
                           ),
                         ),
                       ),
@@ -596,7 +606,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 child: summaryCard(
                                   title: "Symbol",
                                   value: "$base_currency",
-                                  valueColor: colorE2E8F0,
+                                  valueColor: colorCC475569,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -605,7 +615,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 child: summaryCard(
                                   title: "Runtime",
                                   value: "$runtime",
-                                  valueColor: colorE2E8F0,
+                                  valueColor: colorCC475569,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -614,7 +624,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 child: summaryCard(
                                   title: "Sessions",
                                   value: "$sessions_closed",
-                                  valueColor: colorE2E8F0,
+                                  valueColor: colorCC475569,
                                 ),
                               ),
                             ],
@@ -667,7 +677,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: colorE2E8F0),
+                        border: Border.all(color: colorCC475569),
                       ),
                       child: Theme(
                         data: Theme.of(context).copyWith(
@@ -710,7 +720,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
 
                           children: [
                             /// Divider
-                            Container(height: 0.5, color: colorE2E8F0),
+                            Container(height: 0.5, color: colorCC475569),
 
                             /// First Row
                             Padding(
@@ -721,7 +731,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                     child: summaryCard(
                                       title: getCurrentISTTime(),
                                       value: "$today",
-                                      valueColor: colorE2E8F0,
+                                      valueColor: colorCC475569,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -730,7 +740,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                     child: summaryCard(
                                       title: "Realized",
                                       value: "$yesterday",
-                                      valueColor: colorE2E8F0,
+                                      valueColor: colorCC475569,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -739,7 +749,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                     child: summaryCard(
                                       title: "Last 7 Days",
                                       value: "$last_7_days",
-                                      valueColor: colorE2E8F0,
+                                      valueColor: colorCC475569,
                                     ),
                                   ),
                                 ],
@@ -747,7 +757,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                             ),
 
                             /// Divider
-                            Container(height: 0.5, color: colorE2E8F0),
+                            Container(height: 0.5, color: colorCC475569),
 
                             /// Second Row
                             Padding(
@@ -758,7 +768,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                     child: summaryCard(
                                       title: "Last 30 Days",
                                       value: "$last_30_days",
-                                      valueColor: colorE2E8F0,
+                                      valueColor: colorCC475569,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -766,7 +776,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                   Flexible(
                                     child: summaryCard(
                                       title: "Total",
-                                      value: "$total",
+                                      value: "${total.toStringAsFixed(2)}",
                                       valueColor: const Color(0xFF22C55E),
                                     ),
                                   ),
@@ -776,7 +786,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                     child: summaryCard(
                                       title: "Trades Closed",
                                       value: "$trades_closed",
-                                      valueColor: colorE2E8F0,
+                                      valueColor: colorCC475569,
                                     ),
                                   ),
                                 ],
@@ -971,7 +981,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                           ),
                         ),
                         Text(
-                          '\$ $session_profit',
+                          '\$ ${session_profit.toStringAsFixed(2)}',
                           style: TextStyle(
                             color: Color(0xFF039855),
                             fontSize: 18,
@@ -1206,23 +1216,12 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                           ),
                           Expanded(
                             child: Container(
-                              height: 45,
                               padding: EdgeInsets.only(right: 10),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.end,
-                                spacing: 4,
                                 children: [
-                                  Text(
-                                    Runtime,
-                                    style: textStylew400(10, colorCC475569),
-                                  ),
-                                  Text(
-                                    sessionruntime,
-                                    style: textStylew700(12, color475569),
-                                  ),
-                                  SizedBox(height: 4),
                                   Text(
                                     formatDate(created_at),
                                     style: textStylew700(12, color475569),
@@ -1246,7 +1245,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                     title: "Moving Average",
                                     value:
                                         "${average_price.toStringAsFixed(2)}",
-                                    valueColor: colorE2E8F0,
+                                    valueColor: colorCC475569,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -1287,7 +1286,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                     title: "INR Assigned",
                                     value:
                                         "${balance_assigned.toStringAsFixed(2)}",
-                                    valueColor: colorE2E8F0,
+                                    valueColor: colorCC475569,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -1297,7 +1296,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                     title: "INR In Trade",
                                     value:
                                         "${balance_in_trade.toStringAsFixed(2)}",
-                                    valueColor: colorE2E8F0, // Red if loss
+                                    valueColor: colorCC475569, // Red if loss
                                   ),
                                 ),
 
@@ -1325,7 +1324,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                             side: BorderSide(
                               width: 0.5,
                               strokeAlign: BorderSide.strokeAlignCenter,
-                              color: colorE2E8F0,
+                              color: colorCC475569,
                             ),
                           ),
                         ),
@@ -2331,7 +2330,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
           side: BorderSide(
             width: 0.5,
             strokeAlign: BorderSide.strokeAlignCenter,
-            color: colorE2E8F0,
+            color: colorCC475569,
           ),
         ),
       ),
