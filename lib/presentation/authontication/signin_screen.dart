@@ -16,6 +16,8 @@ import '../../styles/text_styles.dart';
 import '../FebTabs.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import '../../api/auth_api.dart';
+import '../../core/token_storage.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -27,7 +29,7 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   var userNameText = TextEditingController();
   var passwordText = TextEditingController();
-  bool _obscureText = false;
+  bool _obscureText = true;
   String? fcmToken;
 
   Future<void> getToken() async {
@@ -468,18 +470,58 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  GestureDetector(
-                    onTap: () {
-                      print("Login click");
-                      //_key.currentContext?.read<AuthCubit>().userLogin(userNameText.text, passwordText.text);
 
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => FabTab(selectedIndex: 0),
-                        ),
-                        ModalRoute.withName(RouteGenerator.fabTab),
-                      );
+                  GestureDetector(
+                    onTap: () async {
+                      print("Login click");
+
+                      String email = userNameText.text.trim();
+                      String password = passwordText.text.trim();
+
+                      if (email.isEmpty || password.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Please enter email and password"),
+                          ),
+                        );
+                        return;
+                      }
+
+                      showDialogLoader(context);
+
+                      try {
+                        String? token = await AuthApi().login(email, password);
+
+                        hideDialogLoader(context);
+
+                        if (token != null) {
+                          await TokenStorage.saveToken(token);
+
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FabTab(selectedIndex: 0),
+                            ),
+                            (route) => false,
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Login failed. Please check credentials",
+                              ),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        hideDialogLoader(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Something went wrong")),
+                        );
+
+                        print("Login Error: $e");
+                      }
                     },
                     child: Container(
                       width: size.width - 50,
@@ -492,7 +534,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         shape: RoundedRectangleBorder(
                           side: BorderSide(
                             width: 1,
-                            color: const Color(0xFF2D57F8) /* Color */,
+                            color: const Color(0xFF2D57F8),
                           ),
                           borderRadius: BorderRadius.circular(4),
                         ),
@@ -509,6 +551,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                     ),
                   ),
+
                   SizedBox(height: 20),
                   Row(
                     mainAxisSize: MainAxisSize.min,

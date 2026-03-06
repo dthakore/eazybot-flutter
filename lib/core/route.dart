@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -29,7 +28,11 @@ class RouteGenerator {
       case splashScreen:
         return MaterialPageRoute(builder: (_) => SplashScreen());
       case botInsightScreen:
-        return MaterialPageRoute(builder: (_) => BotInsightScreen());
+        final botId = settings.arguments as int;
+
+        return MaterialPageRoute(
+          builder: (_) => BotInsightScreen(botId: botId),
+        );
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(backgroundColor: Colors.black),

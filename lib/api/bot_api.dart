@@ -1,24 +1,51 @@
 import 'package:dio/dio.dart';
+import '../core/token_storage.dart';
 
 class BotApi {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: "https://api.eazybot.com/api/v1/",
-      headers: {
-        "Accept": "application/json",
-        "Authorization":
-            "Bearer 2|dys7J6wdDCbCD40zxRejJViv2x1f5aI3Oom18vmJe24dd9d5",
-      },
-    ),
-  );
+  Future<Dio> _dioInstance() async {
+    String? token = await TokenStorage.getToken();
+
+    return Dio(
+      BaseOptions(
+        baseUrl: "https://api.eazybot.com/api/v1/",
+        headers: {
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      ),
+    );
+  }
 
   Future<Map<String, dynamic>> getBots() async {
-    final response = await _dio.get("bots?is_backtest=0");
+    final dio = await _dioInstance();
+    final response = await dio.get("bots?is_backtest=0");
     return response.data;
   }
 
   Future<Map<String, dynamic>> getBotDetails(int botId) async {
-    final response = await _dio.get("bots/$botId");
+    final dio = await _dioInstance();
+    final response = await dio.get("bots/$botId");
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> getBotSession({
+    required int botId,
+    String status = "OPEN",
+    int offset = 0,
+    int limit = 5,
+  }) async {
+    final dio = await _dioInstance();
+
+    final response = await dio.post(
+      "sessions",
+      data: {
+        "bot_id": botId,
+        "status": status,
+        "offset": offset,
+        "limit": limit,
+      },
+    );
+
     return response.data;
   }
 }
