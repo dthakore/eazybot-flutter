@@ -2,16 +2,19 @@ import 'package:dio/dio.dart';
 import '../core/token_storage.dart';
 
 class BotApi {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: "https://api.eazybot.com/api/v1/",
-      headers: {
-        "Accept": "application/json",
-        "Authorization":
-            "Bearer 14|Ty0oeH0sKTDEG3BcywG4sDaA00K0gnYtrEkb1ztOae1db13b",
-      },
-    ),
-  );
+  Future<Dio> _dioInstance() async {
+    String? token = await TokenStorage.getToken();
+
+    return Dio(
+      BaseOptions(
+        baseUrl: "https://api.eazybot.com/api/v1/",
+        headers: {
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      ),
+    );
+  }
 
   Future<Map<String, dynamic>> getBots() async {
     final dio = await _dioInstance();
