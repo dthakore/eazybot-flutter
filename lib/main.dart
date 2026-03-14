@@ -16,7 +16,7 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  //await TokenStorage.removeToken();
+  await TokenStorage.removeToken();
   if (!kIsWeb) {
     await NotificationService.init();
   }

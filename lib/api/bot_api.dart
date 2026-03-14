@@ -48,4 +48,30 @@ class BotApi {
 
     return response.data;
   }
+
+  Future<Map<String, dynamic>> getBotTrades({
+    required int botId,
+    required int sessionId,
+
+    bool opentrades = false,
+    bool successtrades = false,
+    int offset = 0,
+    int limit = 20,
+  }) async {
+    final dio = await _dioInstance();
+
+    final response = await dio.post(
+      "trades",
+      data: {
+        "bot_id": botId,
+        "session_id": sessionId,
+        "open_trades": opentrades,
+        "success_trades": successtrades,
+        "offset": offset,
+        "limit": limit,
+      },
+    );
+
+    return response.data;
+  }
 }

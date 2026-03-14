@@ -13,7 +13,6 @@ import 'package:intl/intl.dart';
 
 class BotInsightScreen extends StatefulWidget {
   final int botId;
-
   const BotInsightScreen({Key? key, required this.botId}) : super(key: key);
 
   @override
@@ -22,9 +21,11 @@ class BotInsightScreen extends StatefulWidget {
 
 class _BotInsightScreenState extends State<BotInsightScreen> {
   bool isCurrentSession = false;
-
+  int? sessionId;
   Map<String, dynamic>? botData;
   List<dynamic>? botsessionData;
+  List<dynamic>? tradesData;
+
   bool isLoading = true;
   String? error;
 
@@ -37,6 +38,9 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
   Future<void> loadData() async {
     await Future.wait([fetchBotDetails(), fetchBotSession()]);
 
+    if (sessionId != null) {
+      await fetchBotTrades();
+    }
     if (!mounted) return;
 
     setState(() {
@@ -62,12 +66,44 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
         botId: widget.botId,
         status: "OPEN",
       );
-      print("API Response: $response");
-      setState(() {
-        botsessionData = response["data"];
-      });
+      print("Session API Response: $response");
+
+      botsessionData = response["data"];
+
+      if (botsessionData != null && botsessionData!.isNotEmpty) {
+        sessionId = botsessionData![0]["id"]; // get session id
+        print("Session ID: $sessionId");
+      }
+
+      setState(() {});
     } catch (e) {
       print(e);
+    }
+  }
+
+  Future<void> fetchBotTrades() async {
+    try {
+      if (botsessionData == null || botsessionData!.isEmpty) {
+        print("No session found, skipping trades API");
+        return;
+      }
+
+      int sessionId = botsessionData![0]["id"];
+
+      print("Calling Trades API with Session ID: $sessionId");
+
+      final response = await BotApi().getBotTrades(
+        botId: widget.botId,
+        sessionId: sessionId,
+      );
+
+      print("Trades API Response: $response");
+
+      setState(() {
+        tradesData = response["data"];
+      });
+    } catch (e) {
+      print("Trades API Error: $e");
     }
   }
 
@@ -81,15 +117,18 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
     return "Today (${hour}h:${minute}m)";
   }
 
-  String formatDate(String dateString) {
-    DateTime date = DateTime.parse(dateString);
+  String formatDate(String? date) {
+    if (date == null || date.isEmpty) {
+      return "-";
+    }
 
-    String day = DateFormat('d').format(date);
-    String suffix = getDaySuffix(int.parse(day));
-
-    String formatted = DateFormat("MMM d', yyyy HH:mm").format(date);
-
-    return formatted.replaceFirst(day, "$day$suffix");
+    try {
+      DateTime parsedDate = DateTime.parse(date);
+      return "${parsedDate.day}/${parsedDate.month}/${parsedDate.year}";
+    } catch (e) {
+      print("Date parsing error: $date");
+      return date;
+    }
   }
 
   String getDaySuffix(int day) {
@@ -115,6 +154,11 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
     } else {
       return const Color(0xFFEF4444); // Red
     }
+  }
+
+  String formatNumber(num value) {
+    final formatter = NumberFormat('#,##,##0.00', 'en_IN');
+    return formatter.format(value);
   }
 
   Color getStatusBgColor(String status, String sellOnly) {
@@ -206,6 +250,20 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
 
     var sessionruntime = "";
 
+    int tradeId = 0;
+    int totalTrades = 0;
+    int buyTrades = 0;
+    int sellTrades = 0;
+
+    double totalBuyAmount = 0.0;
+    double totalSellAmount = 0.0;
+
+    double totalFees = 0.0;
+    double totalNetProfit = 0.0;
+
+    int rejectedTrades = 0;
+    int completedTrades = 0;
+
     double toDouble(value) => (value as num?)?.toDouble() ?? 0.0;
     int toInt(value) => (value as num?)?.toInt() ?? 0;
 
@@ -235,6 +293,45 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
       );
 
       sessionruntime = session["runtime"] ?? "";
+    }
+
+    if (tradesData != null && tradesData!.isNotEmpty) {
+      totalTrades = tradesData!.length;
+
+      for (var trade in tradesData!) {
+        tradeId = toInt(trade["id"]);
+
+        String side = trade["side"] ?? "";
+        String status = trade["trade_status"] ?? "";
+
+        double amount = (trade["amount"] as num?)?.toDouble() ?? 0.0;
+        double fees = (trade["fees"] as num?)?.toDouble() ?? 0.0;
+        double netProfit = (trade["net_profit"] as num?)?.toDouble() ?? 0.0;
+
+        /// BUY / SELL COUNT
+        if (side == "BUY") {
+          buyTrades++;
+          totalBuyAmount += amount;
+        }
+
+        if (side == "SELL") {
+          sellTrades++;
+          totalSellAmount += amount;
+        }
+
+        /// STATUS COUNT
+        if (status == "REJECTED") {
+          rejectedTrades++;
+        }
+
+        if (status == "COMPLETE") {
+          completedTrades++;
+        }
+
+        /// PROFIT + FEES
+        totalFees += fees;
+        totalNetProfit += netProfit;
+      }
     }
     return Scaffold(
       //key: blockKey,
@@ -647,7 +744,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                               Expanded(
                                 child: summaryCard(
                                   title: "UNREALIZED",
-                                  value: "₹${unrealized.toStringAsFixed(2)}",
+                                  value: "₹${formatNumber(unrealized)}",
                                   valueColor: const Color(0xFFEF4444),
                                 ),
                               ),
@@ -656,7 +753,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                               Expanded(
                                 child: summaryCard(
                                   title: "NET P/L",
-                                  value: "₹ ${netPL.toStringAsFixed(2)}",
+                                  value: "₹ ${formatNumber(netPL)}",
                                   valueColor: netPL >= 0
                                       ? const Color(
                                           0xFF22C55E,
@@ -1243,8 +1340,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 Expanded(
                                   child: summaryCard(
                                     title: "Moving Average",
-                                    value:
-                                        "${average_price.toStringAsFixed(2)}",
+                                    value: "${formatNumber(average_price)}",
                                     valueColor: colorCC475569,
                                   ),
                                 ),
@@ -1254,7 +1350,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                   child: summaryCard(
                                     title: "Moving Average %",
                                     value:
-                                        "${moving_average_percentage.toStringAsFixed(2)}%",
+                                        "${formatNumber(moving_average_percentage)}%",
                                     valueColor: moving_average_percentage >= 0
                                         ? const Color(0xFF22C55E)
                                         : const Color(0xFFEF4444),
@@ -1267,7 +1363,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                   child: summaryCard(
                                     title: "Market vs Moving",
                                     value:
-                                        "${market_vs_moving_difference.toStringAsFixed(2)}%",
+                                        "${formatNumber(market_vs_moving_difference)}%",
                                     valueColor: market_vs_moving_difference >= 0
                                         ? const Color(0xFF22C55E)
                                         : const Color(0xFFEF4444),
@@ -1284,8 +1380,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 Expanded(
                                   child: summaryCard(
                                     title: "INR Assigned",
-                                    value:
-                                        "${balance_assigned.toStringAsFixed(2)}",
+                                    value: "${formatNumber(balance_assigned)}",
                                     valueColor: colorCC475569,
                                   ),
                                 ),
@@ -1294,8 +1389,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 Expanded(
                                   child: summaryCard(
                                     title: "INR In Trade",
-                                    value:
-                                        "${balance_in_trade.toStringAsFixed(2)}",
+                                    value: "${formatNumber(balance_in_trade)}",
                                     valueColor: colorCC475569, // Red if loss
                                   ),
                                 ),
@@ -1303,8 +1397,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 Expanded(
                                   child: summaryCard(
                                     title: "INR Available",
-                                    value:
-                                        "${balance_available.toStringAsFixed(2)}",
+                                    value: "${formatNumber(balance_available)}",
                                     valueColor: balance_available >= 0
                                         ? const Color(0xFF22C55E)
                                         : const Color(0xFFEF4444),
@@ -1338,701 +1431,225 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                       ),
 
                       Column(
-                        children: [
-                          Container(
-                            margin: EdgeInsets.only(left: 10, right: 10),
-                            padding: EdgeInsets.all(8),
-                            height: 100,
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFF7FFF5),
-                              shape: RoundedRectangleBorder(
-                                side: BorderSide(
-                                  width: 1,
-                                  color: const Color(0x9948C884),
-                                ),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(6),
-                                  topRight: Radius.circular(6),
-                                ),
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Container(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Container(
-                                        child: Row(
-                                          spacing: 8,
-                                          children: [
-                                            Expanded(
-                                              child: Row(
-                                                spacing: 8,
-                                                children: [
-                                                  Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 5,
-                                                          vertical: 2,
-                                                        ),
-                                                    decoration: ShapeDecoration(
-                                                      color: colorFF12B76A,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              4,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                    child: Text(
-                                                      Buy,
-                                                      style: textStylew500(
-                                                        10,
-                                                        Colors.white,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    'Cover 3',
-                                                    style: textStylew700(
-                                                      12,
-                                                      colorFF333333,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: ShapeDecoration(
-                                                color: colorFFDFEDFF,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
-                                                ),
-                                              ),
-                                              child: Text(
-                                                '-2% X1',
-                                                style: textStylew400(
-                                                  10,
-                                                  color444444,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      SizedBox(height: 5),
-                                      Text.rich(
-                                        TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: 'Open:',
-                                              style: TextStyle(
-                                                color: color444444,
-                                                fontSize: 9,
-                                                fontFamily: fontInter,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: ' ',
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 9,
-                                                fontFamily: fontInter,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: 'Dec 10, 2024 - 22:17',
-                                              style: TextStyle(
-                                                color: color444444,
-                                                fontSize: 9,
-                                                fontFamily: fontInter,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                        children: (tradesData ?? []).map((trade) {
+                          final tradeId = trade["id"] ?? "";
+                          final side = trade["side"] ?? "";
+                          final label = trade["trade_type_label"] ?? "";
+                          final createdAt = trade["created_at"] ?? "";
+                          final amount = trade["amount"] ?? 0;
+                          final quantity = trade["quantity"] ?? 0;
+                          final price = trade["price"] ?? 0;
+                          final grossProfit = trade["gross_profit"] ?? 0;
+                          final fees = trade["fees"] ?? 0;
+                          final netProfit = trade["net_profit"] ?? 0;
+
+                          bool isBuy = side == "BUY";
+
+                          return Column(
+                            children: [
+                              /// BUY / SELL CARD
+                              Container(
+                                margin: EdgeInsets.symmetric(horizontal: 10),
+                                padding: EdgeInsets.all(8),
+                                height: 100,
+                                decoration: ShapeDecoration(
+                                  color: isBuy
+                                      ? const Color(0xFFF7FFF5)
+                                      : const Color(0xFFFFEDED),
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                      width: 1,
+                                      color: isBuy
+                                          ? const Color(0x9948C884)
+                                          : const Color(0x4CFF4848),
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
                                 ),
-                                Spacer(),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                                child: Column(
                                   children: [
-                                    Expanded(
-                                      child: Container(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          spacing: 4,
-                                          children: [
-                                            Text(
-                                              TradeID,
-                                              style: textStylew400(
-                                                10,
-                                                color99475569,
-                                              ),
+                                    /// HEADER
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 5,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isBuy
+                                                ? colorFF12B76A
+                                                : Colors.red,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
                                             ),
-                                            Text(
-                                              '50242660',
-                                              style: textStylew600(
-                                                12,
-                                                color475569,
-                                              ),
+                                          ),
+                                          child: Text(
+                                            side,
+                                            style: textStylew500(
+                                              10,
+                                              Colors.white,
                                             ),
-                                          ],
+                                          ),
                                         ),
+
+                                        SizedBox(width: 8),
+
+                                        Expanded(
+                                          child: Text(
+                                            label,
+                                            style: textStylew700(
+                                              12,
+                                              colorFF333333,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    SizedBox(height: 5),
+
+                                    /// DATE
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        "Open: $createdAt",
+                                        style: textStylew400(9, color444444),
                                       ),
                                     ),
-                                    Expanded(
-                                      child: Container(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          spacing: 4,
-                                          children: [
-                                            Text(
-                                              Amount,
-                                              style: textStylew400(
-                                                10,
-                                                color99475569,
-                                              ),
-                                            ),
-                                            Text(
-                                              '105.75',
-                                              style: textStylew600(
-                                                12,
-                                                color475569,
-                                              ),
-                                            ),
-                                          ],
+
+                                    Spacer(),
+
+                                    /// TRADE INFO
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _tradeColumn(
+                                            "TradeID",
+                                            tradeId.toString(),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Container(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          spacing: 4,
-                                          children: [
-                                            Text(
-                                              Quantity,
-                                              style: textStylew400(
-                                                10,
-                                                color99475569,
-                                              ),
-                                            ),
-                                            Text(
-                                              '0.0291',
-                                              style: textStylew600(
-                                                12,
-                                                color475569,
-                                              ),
-                                            ),
-                                          ],
+
+                                        Expanded(
+                                          child: _tradeColumn(
+                                            "Amount",
+                                            amount.toString(),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Container(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          spacing: 4,
-                                          children: [
-                                            Text(
-                                              Price,
-                                              style: textStylew400(
-                                                10,
-                                                color99475569,
-                                              ),
-                                            ),
-                                            Text(
-                                              '3634.04',
-                                              style: textStylew600(
-                                                12,
-                                                color475569,
-                                              ),
-                                            ),
-                                          ],
+
+                                        Expanded(
+                                          child: _tradeColumn(
+                                            "Quantity",
+                                            quantity.toString(),
+                                          ),
                                         ),
-                                      ),
+
+                                        Expanded(
+                                          child: _tradeColumn(
+                                            "Price",
+                                            price.toString(),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            margin: EdgeInsets.only(left: 10, right: 10),
-                            padding: EdgeInsets.all(8),
-                            height: 100,
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFFFEDED),
-                              shape: RoundedRectangleBorder(
-                                side: BorderSide(
-                                  width: 1,
-                                  color: const Color(0x4CFF4848),
-                                ),
                               ),
-                            ),
-                            child: Column(
-                              children: [
-                                Container(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Container(
-                                        child: Row(
-                                          spacing: 8,
-                                          children: [
-                                            Expanded(
-                                              child: Row(
-                                                spacing: 8,
-                                                children: [
-                                                  Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 5,
-                                                          vertical: 2,
-                                                        ),
-                                                    decoration: ShapeDecoration(
-                                                      color: Colors.red,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              4,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                    child: Text(
-                                                      Sell,
-                                                      style: textStylew500(
-                                                        10,
-                                                        Colors.white,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    'Cover 3',
-                                                    style: textStylew700(
-                                                      12,
-                                                      colorFF333333,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: ShapeDecoration(
-                                                color: colorFFDFEDFF,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
-                                                ),
-                                              ),
-                                              child: Text(
-                                                '-2% X1',
-                                                style: textStylew400(
-                                                  10,
-                                                  color444444,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      SizedBox(height: 5),
-                                      Text.rich(
-                                        TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: 'Open:',
-                                              style: TextStyle(
-                                                color: color444444,
-                                                fontSize: 9,
-                                                fontFamily: fontInter,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: ' ',
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 9,
-                                                fontFamily: fontInter,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: 'Dec 10, 2024 - 22:17',
-                                              style: TextStyle(
-                                                color: color444444,
-                                                fontSize: 9,
-                                                fontFamily: fontInter,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+
+                              /// PROFIT CARD
+                              Container(
+                                margin: EdgeInsets.symmetric(horizontal: 10),
+                                padding: EdgeInsets.all(8),
+                                decoration: ShapeDecoration(
+                                  color: const Color(0xFFF8FBFF),
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(
+                                      width: 1,
+                                      color: const Color(0xFFCBD5E1),
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
                                 ),
-                                Spacer(),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                                child: Column(
                                   children: [
-                                    Expanded(
-                                      child: Container(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          spacing: 4,
-                                          children: [
-                                            Text(
-                                              TradeID,
-                                              style: textStylew400(
-                                                10,
-                                                color99475569,
-                                              ),
-                                            ),
-                                            Text(
-                                              '50242660',
-                                              style: textStylew600(
-                                                12,
-                                                color475569,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Container(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          spacing: 4,
-                                          children: [
-                                            Text(
-                                              Amount,
-                                              style: textStylew400(
-                                                10,
-                                                color99475569,
-                                              ),
-                                            ),
-                                            Text(
-                                              '105.75',
-                                              style: textStylew600(
-                                                12,
-                                                color475569,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Container(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          spacing: 4,
-                                          children: [
-                                            Text(
-                                              Quantity,
-                                              style: textStylew400(
-                                                10,
-                                                color99475569,
-                                              ),
-                                            ),
-                                            Text(
-                                              '0.0291',
-                                              style: textStylew600(
-                                                12,
-                                                color475569,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Container(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          spacing: 4,
-                                          children: [
-                                            Text(
-                                              Price,
-                                              style: textStylew400(
-                                                10,
-                                                color99475569,
-                                              ),
-                                            ),
-                                            Text(
-                                              '3634.04',
-                                              style: textStylew600(
-                                                12,
-                                                color475569,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            margin: EdgeInsets.only(left: 10, right: 10),
-                            padding: EdgeInsets.all(8),
-                            height: 100,
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFF8FBFF),
-                              shape: RoundedRectangleBorder(
-                                side: BorderSide(
-                                  width: 1,
-                                  color: const Color(0xFFCBD5E1),
-                                ),
-                                borderRadius: BorderRadius.only(
-                                  bottomLeft: Radius.circular(6),
-                                  bottomRight: Radius.circular(6),
-                                ),
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    spacing: 15,
-                                    children: [
-                                      Expanded(
-                                        child: Container(
-                                          //width: 140,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            spacing: 60,
-                                            children: [
-                                              Text(
-                                                GrossProfit,
-                                                style: textStylew400(
-                                                  10,
-                                                  colorCC475569,
-                                                ),
-                                              ),
-                                              Text(
-                                                '2.50',
-                                                style: textStylew600(
-                                                  12,
-                                                  color475569,
-                                                ),
-                                              ),
-                                            ],
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _profitRow(
+                                            "GrossProfit",
+                                            grossProfit.toString(),
                                           ),
                                         ),
-                                      ),
-                                      Expanded(
-                                        child: Container(
-                                          width: 140,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            spacing: 60,
-                                            children: [
-                                              Text(
-                                                Profit,
-                                                style: textStylew400(
-                                                  10,
-                                                  colorCC475569,
-                                                ),
-                                              ),
-                                              Text(
-                                                '2.02%',
-                                                style: textStylew600(
-                                                  12,
-                                                  color475569,
-                                                ),
-                                              ),
-                                            ],
+                                        Expanded(
+                                          child: _profitRow(
+                                            "Profit/AP",
+                                            trade["profit_to_ap"].toString(),
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Row(
-                                    spacing: 15,
-                                    children: [
-                                      Expanded(
-                                        child: Container(
-                                          //width: 140,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            spacing: 10,
-                                            children: [
-                                              Text(
-                                                '${Fees}:',
-                                                style: textStylew400(
-                                                  10,
-                                                  colorCC475569,
-                                                ),
-                                              ),
-                                              Text(
-                                                '0.47372728',
-                                                style: textStylew600(
-                                                  12,
-                                                  color475569,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Container(
-                                          width: 140,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            spacing: 10,
-                                            children: [
-                                              Text(
-                                                '${ProfitAvgPrice}:',
-                                                style: textStylew400(
-                                                  10,
-                                                  colorCC475569,
-                                                ),
-                                              ),
-                                              Text(
-                                                '1.01%',
-                                                style: textStylew600(
-                                                  12,
-                                                  color475569,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  margin: EdgeInsets.only(top: 5, bottom: 5),
-                                  decoration: ShapeDecoration(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(40),
+                                      ],
                                     ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          '${NetProfit}:',
-                                          style: textStylew600(14, colorBlack),
+
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _profitRow(
+                                            "Fees",
+                                            fees.toString(),
+                                          ),
                                         ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
+                                        Expanded(
+                                          child: _profitRow(
+                                            "Profit",
+                                            trade["profit"].toString(),
+                                          ),
                                         ),
-                                        decoration: ShapeDecoration(
-                                          color: color1929C004,
-                                          shape: RoundedRectangleBorder(
+                                      ],
+                                    ),
+
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            "NetProfit:",
+                                            style: textStylew600(
+                                              14,
+                                              colorBlack,
+                                            ),
+                                          ),
+                                        ),
+
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: color1929C004,
                                             borderRadius: BorderRadius.circular(
                                               40,
                                             ),
                                           ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          spacing: 10,
-                                          children: [
-                                            Text(
-                                              '1.01(0.98%)',
-                                              style: textStylew700(
-                                                12,
-                                                color444444,
-                                              ),
+                                          child: Text(
+                                            netProfit.toString(),
+                                            style: textStylew700(
+                                              12,
+                                              color444444,
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                              ),
 
+                              SizedBox(height: 10),
+                            ],
+                          );
+                        }).toList(),
+                      ),
                       SizedBox(height: 15),
 
                       Column(
@@ -2367,6 +1984,26 @@ Widget badge({
         ),
       ],
     ),
+  );
+}
+
+Widget _tradeColumn(String title, String value) {
+  return Column(
+    children: [
+      Text(title, style: textStylew400(10, color99475569)),
+      SizedBox(height: 4),
+      Text(value, style: textStylew600(12, color475569)),
+    ],
+  );
+}
+
+Widget _profitRow(String title, String value) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(title, style: textStylew400(10, colorCC475569)),
+      Text(value, style: textStylew600(12, color475569)),
+    ],
   );
 }
 
