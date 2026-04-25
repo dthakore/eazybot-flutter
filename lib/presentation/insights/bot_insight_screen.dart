@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import '../../constant/colors.dart';
 import '../../constant/images.dart';
 import '../../constant/string.dart';
+import '../../styles/bot_ui_styles.dart';
 import '../../styles/text_styles.dart';
+import '../../widgets/bot_badge.dart';
 import '../../util/myappbar.dart';
 import '../../util/utils.dart';
 import 'package:intl/intl.dart';
@@ -333,9 +335,21 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
         totalNetProfit += netProfit;
       }
     }
-    return Scaffold(
-      //key: blockKey,
-      backgroundColor: colorF1F5F9,
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFBE9F8),
+            Color(0xFFF3F0FF),
+            Color(0xFFE8F4FF),
+          ],
+          stops: [0.0, 0.5, 1.0],
+        ),
+      ),
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       //drawer: SideMenu(),
       appBar: MyAppBar(
         title: "",
@@ -381,9 +395,9 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(100),
-                                topRight: Radius.circular(100),
-                                bottomLeft: Radius.circular(100),
+                                topLeft: Radius.circular(BotUiRadius.avatar),
+                                topRight: Radius.circular(BotUiRadius.avatar),
+                                bottomLeft: Radius.circular(BotUiRadius.avatar),
                               ),
                             ),
                             shadows: [
@@ -432,7 +446,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
             children: [
               Text(
                 BotInsight,
-                style: blackBoldTextStyle(18),
+                style: blackBoldTextStyle(BotUiFontSize.xl),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 10),
@@ -443,7 +457,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                 decoration: ShapeDecoration(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(BotUiRadius.xl),
                   ),
                   shadows: [
                     BoxShadow(
@@ -456,93 +470,68 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                 ),
                 child: Column(
                   children: [
-                    SizedBox(height: 20),
+                    SizedBox(height: 12),
                     Row(
                       children: [
                         Container(
                           width: 4,
                           height: 24,
                           decoration: ShapeDecoration(
-                            color: const Color(0xFF039855) /* Success-600 */,
+                            color: getStatusColor(status, sell_only),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.only(
-                                topRight: Radius.circular(6),
-                                bottomRight: Radius.circular(6),
+                                topRight: Radius.circular(BotUiRadius.md),
+                                bottomRight: Radius.circular(BotUiRadius.md),
                               ),
                             ),
                           ),
                         ),
                         SizedBox(width: 10),
-                        Text(
-                          "$bottitle",
-                          style: textStylew600(16, Colors.black),
+                        Expanded(
+                          child: Text(
+                            "$bottitle",
+                            style: const TextStyle(
+                              color: Color(0xFF0EA5E9),
+                              fontSize: BotUiFontSize.xl,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            softWrap: true,
+                          ),
                         ),
-                        SizedBox(width: 10),
+                        SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
+                            horizontal: 8,
                             vertical: 3,
                           ),
-                          decoration: ShapeDecoration(
-                            color: getStatusBgColor(
-                              status,
-                              sell_only,
-                            ) /* Success-100 */,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(40),
+                          decoration: BoxDecoration(
+                            color: getStatusBgColor(status, sell_only),
+                            border: Border.all(
+                              color: getStatusColor(status, sell_only),
                             ),
+                            borderRadius: BorderRadius.circular(BotUiRadius.pill),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            spacing: 6,
+                            spacing: 4,
                             children: [
                               Container(
-                                width: 9,
-                                height: 9,
-                                decoration: ShapeDecoration(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
                                   color: getStatusColor(status, sell_only),
-                                  shape: OvalBorder(),
+                                  shape: BoxShape.circle,
                                 ),
                               ),
                               Text(
                                 status,
                                 style: textStylew600(
-                                  14,
+                                  BotUiFontSize.xs,
                                   getStatusColor(status, sell_only),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        Spacer(),
-                        Container(
-                          width: 39,
-                          height: 32,
-                          padding: EdgeInsets.all(5),
-                          decoration: ShapeDecoration(
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              side: BorderSide(width: 1, color: colorPrimary),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          child: Image.asset(icArrowDown),
-                        ),
-                        SizedBox(width: 10),
-                        Container(
-                          width: 39,
-                          height: 32,
-                          padding: EdgeInsets.all(5),
-                          decoration: ShapeDecoration(
-                            color: colorPrimary,
-                            shape: RoundedRectangleBorder(
-                              side: BorderSide(width: 1, color: colorPrimary),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          child: Image.asset(icEdit),
                         ),
                         SizedBox(width: 10),
                       ],
@@ -551,49 +540,17 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                     Row(
                       children: [
                         Container(
-                          width: 65,
-                          height: 60,
-                          padding: EdgeInsets.only(left: 10, top: 15),
-                          child: Stack(
-                            children: [
-                              Positioned(
-                                left: 0,
-                                top: 0,
-                                child: Container(
-                                  child: Image.asset(
-                                    icUsdc,
-                                    width: 35,
-                                    height: 35,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                left: 20,
-                                top: 0,
-                                child: Container(
-                                  child: Image.asset(
-                                    icUsdcT,
-                                    width: 35,
-                                    height: 35,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Container(
-                          padding: EdgeInsets.only(top: 10),
+                          padding: EdgeInsets.only(left: 10, top: 10),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 '$bottitle',
-                                style: textStylew600(14, color1E293B),
+                                style: textStylew600(BotUiFontSize.base, color1E293B),
                               ),
                               Text(
                                 '₹${marketprice.toStringAsFixed(2)}',
-                                style: textStylew600(14, color94A3C1),
+                                style: textStylew600(BotUiFontSize.base, color1E293B),
                               ),
                             ],
                           ),
@@ -606,11 +563,11 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                               children: [
                                 Text(
                                   SessionsClosed,
-                                  style: textStylew400(11, color64748B),
+                                  style: textStylew400(BotUiFontSize.xs, color64748B),
                                 ),
                                 Text(
                                   '$sessions_closed',
-                                  style: textStylew600(12, colorBlack),
+                                  style: textStylew600(BotUiFontSize.sm, colorBlack),
                                 ),
                               ],
                             ),
@@ -625,39 +582,30 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                       width: double.infinity,
                       child: Column(
                         children: [
-                          Row(
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
-                              Flexible(
-                                flex: 1, // 👈 Bigger width
-                                child: badge(
-                                  text: "$strategy  $strategy_type",
-                                  icon: icBullseye,
-                                  bgColor: const Color(0xFFFFF4D6),
-                                  textColor: const Color(0xFFB54708),
-                                  borderColor: const Color(0xFFFEC84B),
-                                ),
+                              BotBadge(
+                                text: "$strategy  $strategy_type",
+                                icon: icBullseye,
+                                bgColor: const Color(0xFFFFF4D6),
+                                textColor: const Color(0xFFB54708),
+                                borderColor: const Color(0xFFFEC84B),
                               ),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                flex: 0, // 👈 Smaller
-                                child: badge(
-                                  text: "$exchange",
-                                  icon: icBitcoin,
-                                  bgColor: const Color(0xFFEDE9FE),
-                                  textColor: const Color(0xFF6941C6),
-                                  borderColor: const Color(0xFFD6BBFB),
-                                ),
+                              BotBadge(
+                                text: "$exchange",
+                                icon: icBitcoin,
+                                bgColor: const Color(0xFFEDE9FE),
+                                textColor: const Color(0xFF6941C6),
+                                borderColor: const Color(0xFFD6BBFB),
                               ),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                flex: 0, // 👈 Smaller
-                                child: badge(
-                                  text: "$cycle_type",
-                                  icon: icArrowsRotate,
-                                  bgColor: const Color(0xFFE0F2FE),
-                                  textColor: const Color(0xFF0369A1),
-                                  borderColor: const Color(0xFFBAE6FD),
-                                ),
+                              BotBadge(
+                                text: "$cycle_type",
+                                icon: icArrowsRotate,
+                                bgColor: const Color(0xFFE0F2FE),
+                                textColor: const Color(0xFF0369A1),
+                                borderColor: const Color(0xFFBAE6FD),
                               ),
                             ],
                           ),
@@ -667,7 +615,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                           /// SECOND ROW (Full Width)
                           SizedBox(
                             width: double.infinity,
-                            child: badge(
+                            child: BotBadge(
                               text: "$category",
                               icon: icBullseyeArrow,
                               bgColor: const Color(0xFFF2F4F7),
@@ -773,7 +721,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(BotUiRadius.xxl),
                         border: Border.all(color: colorCC475569),
                       ),
                       child: Theme(
@@ -793,10 +741,10 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
-                                'Profit Summary',
+                                'Bot Revenue Insights',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                                  fontSize: BotUiFontSize.base,
                                 ),
                               ),
 
@@ -835,7 +783,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
 
                                   Flexible(
                                     child: summaryCard(
-                                      title: "Realized",
+                                      title: "Yesterday",
                                       value: "$yesterday",
                                       valueColor: colorCC475569,
                                     ),
@@ -926,7 +874,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                       color: (isCurrentSession == true)
                                           ? colorPrimary
                                           : color717680,
-                                      fontSize: 14,
+                                      fontSize: BotUiFontSize.base,
                                       fontFamily: fontInter,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -968,7 +916,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                       color: (isCurrentSession == true)
                                           ? color717680
                                           : colorPrimary,
-                                      fontSize: 14,
+                                      fontSize: BotUiFontSize.base,
                                       fontFamily: fontInter,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -989,7 +937,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                           color: Colors.grey.withAlpha(60),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
-                                              16,
+                                              BotUiRadius.chip,
                                             ),
                                           ),
                                         ),
@@ -1003,7 +951,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                             Text(
                                               '20',
                                               style: blackNormalTextStyle(
-                                                12,
+                                                BotUiFontSize.md,
                                                 color414651,
                                               ),
                                             ),
@@ -1038,7 +986,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                 decoration: ShapeDecoration(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(BotUiRadius.xl),
                   ),
                   shadows: [
                     BoxShadow(
@@ -1067,12 +1015,12 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                             children: [
                               Text(
                                 'Session',
-                                style: textStylew600(14, color64748B),
+                                style: textStylew600(BotUiFontSize.base, color64748B),
                               ),
                               SizedBox(width: 3),
                               Text(
                                 '$sessionid',
-                                style: textStylew600(16, color475569),
+                                style: textStylew600(BotUiFontSize.lg, color475569),
                               ),
                             ],
                           ),
@@ -1081,7 +1029,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                           '\$ ${session_profit.toStringAsFixed(2)}',
                           style: TextStyle(
                             color: Color(0xFF039855),
-                            fontSize: 18,
+                            fontSize: BotUiFontSize.xl,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -1104,12 +1052,12 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 spacing: 4,
                                 children: [
                                   Text(
-                                    Tradesclosed,
-                                    style: textStylew400(10, colorCC475569),
+                                    "Trades Closed",
+                                    style: textStylew400(BotUiFontSize.xs, colorCC475569),
                                   ),
                                   Text(
                                     '$trades_closed',
-                                    style: textStylew700(12, color475569),
+                                    style: textStylew700(BotUiFontSize.sm, color475569),
                                   ),
                                 ],
                               ),
@@ -1132,11 +1080,11 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 children: [
                                   Text(
                                     OpeningPrice,
-                                    style: textStylew400(10, colorCC475569),
+                                    style: textStylew400(BotUiFontSize.xs, colorCC475569),
                                   ),
                                   Text(
                                     '${opening_price.toStringAsFixed(2)}',
-                                    style: textStylew700(12, color475569),
+                                    style: textStylew700(BotUiFontSize.sm, color475569),
                                   ),
                                 ],
                               ),
@@ -1160,11 +1108,11 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 children: [
                                   Text(
                                     'Profit To AP',
-                                    style: textStylew400(10, colorCC475569),
+                                    style: textStylew400(BotUiFontSize.xs, colorCC475569),
                                   ),
                                   Text(
                                     '${profit_to_ap.toStringAsFixed(2)}',
-                                    style: textStylew700(12, color475569),
+                                    style: textStylew700(BotUiFontSize.sm, color475569),
                                   ),
                                 ],
                               ),
@@ -1189,11 +1137,11 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 children: [
                                   Text(
                                     'Session Profit',
-                                    style: textStylew400(10, colorCC475569),
+                                    style: textStylew400(BotUiFontSize.xs, colorCC475569),
                                   ),
                                   Text(
                                     '${session_profit.toStringAsFixed(2)}',
-                                    style: textStylew700(12, color475569),
+                                    style: textStylew700(BotUiFontSize.sm, color475569),
                                   ),
                                 ],
                               ),
@@ -1216,11 +1164,11 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 children: [
                                   Text(
                                     'Total Volume',
-                                    style: textStylew400(10, colorCC475569),
+                                    style: textStylew400(BotUiFontSize.xs, colorCC475569),
                                   ),
                                   Text(
                                     '${total_volume.toStringAsFixed(2)}',
-                                    style: textStylew700(12, color475569),
+                                    style: textStylew700(BotUiFontSize.sm, color475569),
                                   ),
                                 ],
                               ),
@@ -1247,7 +1195,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                     children: [
                                       Text(
                                         Runtime,
-                                        style: textStylew400(10, colorCC475569),
+                                        style: textStylew400(BotUiFontSize.xs, colorCC475569),
                                       ),
                                       SizedBox(width: 2),
                                       Icon(
@@ -1259,7 +1207,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                   ),
                                   Text(
                                     '$sessionruntime',
-                                    style: textStylew700(12, color475569),
+                                    style: textStylew700(BotUiFontSize.sm, color475569),
                                   ),
                                 ],
                               ),
@@ -1287,7 +1235,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                     children: [
                                       Text(
                                         'Market Price',
-                                        style: textStylew400(10, colorCC475569),
+                                        style: textStylew400(BotUiFontSize.xs, colorCC475569),
                                       ),
                                       SizedBox(width: 2),
                                       Icon(
@@ -1299,7 +1247,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                   ),
                                   Text(
                                     '$marketprice',
-                                    style: textStylew700(12, color475569),
+                                    style: textStylew700(BotUiFontSize.sm, color475569),
                                   ),
                                 ],
                               ),
@@ -1321,7 +1269,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                 children: [
                                   Text(
                                     formatDate(created_at),
-                                    style: textStylew700(12, color475569),
+                                    style: textStylew700(BotUiFontSize.sm, color475569),
                                   ),
                                 ],
                               ),
@@ -1425,8 +1373,8 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                       Container(
                         padding: EdgeInsets.all(10),
                         child: Text(
-                          'Session Trades - 12 Open',
-                          style: textStylew600(14, color475569),
+                          'Session Trades - ${tradesData?.length ?? 0} Open',
+                          style: textStylew600(BotUiFontSize.base, color475569),
                         ),
                       ),
 
@@ -1463,7 +1411,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                           ? const Color(0x9948C884)
                                           : const Color(0x4CFF4848),
                                     ),
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(BotUiRadius.md),
                                   ),
                                 ),
 
@@ -1474,22 +1422,29 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                       children: [
                                         Container(
                                           padding: EdgeInsets.symmetric(
-                                            horizontal: 5,
-                                            vertical: 2,
+                                            horizontal: 8,
+                                            vertical: 3,
                                           ),
                                           decoration: BoxDecoration(
                                             color: isBuy
-                                                ? colorFF12B76A
-                                                : Colors.red,
+                                                ? const Color(0xFFD1FAE5)
+                                                : const Color(0xFFFEE2E2),
                                             borderRadius: BorderRadius.circular(
-                                              4,
+                                              BotUiRadius.sm,
+                                            ),
+                                            border: Border.all(
+                                              color: isBuy
+                                                  ? const Color(0xFF22C55E)
+                                                  : const Color(0xFFEF4444),
                                             ),
                                           ),
                                           child: Text(
                                             side,
-                                            style: textStylew500(
-                                              10,
-                                              Colors.white,
+                                            style: textStylew700(
+                                              BotUiFontSize.xs,
+                                              isBuy
+                                                  ? const Color(0xFF16A34A)
+                                                  : const Color(0xFFDC2626),
                                             ),
                                           ),
                                         ),
@@ -1500,7 +1455,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                           child: Text(
                                             label,
                                             style: textStylew700(
-                                              12,
+                                              BotUiFontSize.md,
                                               colorFF333333,
                                             ),
                                           ),
@@ -1515,7 +1470,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                       alignment: Alignment.centerLeft,
                                       child: Text(
                                         "Open: $createdAt",
-                                        style: textStylew400(9, color444444),
+                                        style: textStylew400(BotUiFontSize.xxs, color444444),
                                       ),
                                     ),
 
@@ -1526,7 +1481,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                       children: [
                                         Expanded(
                                           child: _tradeColumn(
-                                            "TradeID",
+                                            "Trade ID",
                                             tradeId.toString(),
                                           ),
                                         ),
@@ -1568,7 +1523,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                       width: 1,
                                       color: const Color(0xFFCBD5E1),
                                     ),
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(BotUiRadius.md),
                                   ),
                                 ),
 
@@ -1578,7 +1533,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                       children: [
                                         Expanded(
                                           child: _profitRow(
-                                            "GrossProfit",
+                                            "Gross Profit",
                                             grossProfit.toString(),
                                           ),
                                         ),
@@ -1612,9 +1567,9 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                       children: [
                                         Expanded(
                                           child: Text(
-                                            "NetProfit:",
+                                            "Net Profit:",
                                             style: textStylew600(
-                                              14,
+                                              BotUiFontSize.base,
                                               colorBlack,
                                             ),
                                           ),
@@ -1628,13 +1583,13 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                           decoration: BoxDecoration(
                                             color: color1929C004,
                                             borderRadius: BorderRadius.circular(
-                                              40,
+                                              BotUiRadius.pill,
                                             ),
                                           ),
                                           child: Text(
                                             netProfit.toString(),
                                             style: textStylew700(
-                                              12,
+                                              BotUiFontSize.md,
                                               color444444,
                                             ),
                                           ),
@@ -1665,15 +1620,15 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                   color: colorFFF0B90B,
                                 ),
                                 borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(10),
-                                  topRight: Radius.circular(10),
+                                  topLeft: Radius.circular(BotUiRadius.xl),
+                                  topRight: Radius.circular(BotUiRadius.xl),
                                 ),
                               ),
                             ),
                             child: Center(
                               child: Text(
                                 AccountHasInsufficientBalance,
-                                style: textStylew500(12, colorBlack),
+                                style: textStylew500(BotUiFontSize.md, colorBlack),
                               ),
                             ),
                           ),
@@ -1689,8 +1644,8 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                   color: colorFFF0B90B,
                                 ),
                                 borderRadius: BorderRadius.only(
-                                  bottomLeft: Radius.circular(6),
-                                  bottomRight: Radius.circular(6),
+                                  bottomLeft: Radius.circular(BotUiRadius.md),
+                                  bottomRight: Radius.circular(BotUiRadius.md),
                                 ),
                               ),
                             ),
@@ -1712,30 +1667,31 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                                   Container(
                                                     padding:
                                                         const EdgeInsets.symmetric(
-                                                          horizontal: 5,
-                                                          vertical: 2,
+                                                          horizontal: 8,
+                                                          vertical: 3,
                                                         ),
-                                                    decoration: ShapeDecoration(
-                                                      color: colorFF12B76A,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              4,
-                                                            ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFD1FAE5),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            BotUiRadius.sm,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: const Color(0xFF22C55E),
                                                       ),
                                                     ),
                                                     child: Text(
                                                       Buy,
-                                                      style: textStylew500(
-                                                        10,
-                                                        Colors.white,
+                                                      style: textStylew700(
+                                                        BotUiFontSize.xs,
+                                                        const Color(0xFF16A34A),
                                                       ),
                                                     ),
                                                   ),
                                                   Text(
                                                     'Cover 2',
                                                     style: textStylew700(
-                                                      12,
+                                                      BotUiFontSize.md,
                                                       colorFF333333,
                                                     ),
                                                   ),
@@ -1752,13 +1708,13 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                                 color: colorFFDFEDFF,
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
-                                                      BorderRadius.circular(4),
+                                                      BorderRadius.circular(BotUiRadius.sm),
                                                 ),
                                               ),
                                               child: Text(
                                                 '-2% X1',
                                                 style: textStylew400(
-                                                  10,
+                                                  BotUiFontSize.xs,
                                                   color444444,
                                                 ),
                                               ),
@@ -1774,7 +1730,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                               text: 'Open:',
                                               style: TextStyle(
                                                 color: color444444,
-                                                fontSize: 9,
+                                                fontSize: BotUiFontSize.xxs,
                                                 fontFamily: fontInter,
                                                 fontWeight: FontWeight.w400,
                                               ),
@@ -1783,7 +1739,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                               text: ' ',
                                               style: TextStyle(
                                                 color: Colors.black,
-                                                fontSize: 9,
+                                                fontSize: BotUiFontSize.xxs,
                                                 fontFamily: fontInter,
                                                 fontWeight: FontWeight.w400,
                                               ),
@@ -1792,7 +1748,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                               text: 'Dec 10, 2024 - 22:17',
                                               style: TextStyle(
                                                 color: color444444,
-                                                fontSize: 9,
+                                                fontSize: BotUiFontSize.xxs,
                                                 fontFamily: fontInter,
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -1820,14 +1776,14 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                             Text(
                                               TradeID,
                                               style: textStylew400(
-                                                10,
+                                                BotUiFontSize.xs,
                                                 color99475569,
                                               ),
                                             ),
                                             Text(
                                               '50242660',
                                               style: textStylew600(
-                                                12,
+                                                BotUiFontSize.md,
                                                 color475569,
                                               ),
                                             ),
@@ -1848,14 +1804,14 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                             Text(
                                               Amount,
                                               style: textStylew400(
-                                                10,
+                                                BotUiFontSize.xs,
                                                 color99475569,
                                               ),
                                             ),
                                             Text(
                                               '105.75',
                                               style: textStylew600(
-                                                12,
+                                                BotUiFontSize.md,
                                                 color475569,
                                               ),
                                             ),
@@ -1876,14 +1832,14 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                             Text(
                                               Quantity,
                                               style: textStylew400(
-                                                10,
+                                                BotUiFontSize.xs,
                                                 color99475569,
                                               ),
                                             ),
                                             Text(
                                               '0.0291',
                                               style: textStylew600(
-                                                12,
+                                                BotUiFontSize.md,
                                                 color475569,
                                               ),
                                             ),
@@ -1904,14 +1860,14 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
                                             Text(
                                               Price,
                                               style: textStylew400(
-                                                10,
+                                                BotUiFontSize.xs,
                                                 color99475569,
                                               ),
                                             ),
                                             Text(
                                               '3634.04',
                                               style: textStylew600(
-                                                12,
+                                                BotUiFontSize.md,
                                                 color475569,
                                               ),
                                             ),
@@ -1936,7 +1892,7 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget devider() {
@@ -1955,44 +1911,14 @@ class _BotInsightScreenState extends State<BotInsightScreen> {
   }
 }
 
-Widget badge({
-  required String text,
-  required String icon,
-  required Color bgColor,
-  required Color textColor,
-  required Color borderColor,
-}) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    decoration: BoxDecoration(
-      color: bgColor,
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: borderColor),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset(icon, width: 16, height: 16),
-        const SizedBox(width: 6),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: textColor,
-          ),
-        ),
-      ],
-    ),
-  );
-}
+
 
 Widget _tradeColumn(String title, String value) {
   return Column(
     children: [
-      Text(title, style: textStylew400(10, color99475569)),
+      Text(title, style: textStylew400(BotUiFontSize.xs, color99475569)),
       SizedBox(height: 4),
-      Text(value, style: textStylew600(12, color475569)),
+      Text(value, style: textStylew600(BotUiFontSize.md, color475569)),
     ],
   );
 }
@@ -2001,8 +1927,8 @@ Widget _profitRow(String title, String value) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Text(title, style: textStylew400(10, colorCC475569)),
-      Text(value, style: textStylew600(12, color475569)),
+      Text(title, style: textStylew400(BotUiFontSize.xs, colorCC475569)),
+      Text(value, style: textStylew600(BotUiFontSize.md, color475569)),
     ],
   );
 }
@@ -2013,10 +1939,10 @@ Widget summaryCard({
   required Color valueColor,
 }) {
   return Container(
-    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(BotUiRadius.xl),
       border: Border.all(color: const Color(0xFFE2E8F0)),
       boxShadow: [
         BoxShadow(
@@ -2031,24 +1957,30 @@ Widget summaryCard({
       children: [
         Row(
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
-                letterSpacing: 0.5,
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: BotUiFontSize.xs,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
-            const SizedBox(width: 4),
-            const Icon(Icons.info_outline, size: 14, color: Color(0xFF94A3B8)),
+            const SizedBox(width: 2),
+            const Icon(Icons.info_outline, size: 12, color: Color(0xFF94A3B8)),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: BotUiFontSize.value,
             fontWeight: FontWeight.w700,
             color: valueColor,
           ),
