@@ -16,9 +16,13 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await TokenStorage.removeToken();
+  // await TokenStorage.removeToken();
   if (!kIsWeb) {
-    await NotificationService.init();
+    try {
+      await NotificationService.init();
+    } catch (e) {
+      print("Notification init error: $e");
+    }
   }
 
   runApp(const MyApp());
