@@ -16,25 +16,29 @@ class NotificationService {
   static Future<void> init() async {
     if (Platform.isWindows) return;
 
-    /// Ask permission (Android 13+)
     await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    /// Android init
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
+    const DarwinInitializationSettings iosSettings =
+        DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        );
+
     final InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
+      iOS: iosSettings,
     );
 
-    /// ✅ IMPORTANT: Use NAMED parameter
     await _local.initialize(settings: initSettings);
 
-    /// Create channel
     final androidPlugin = _local
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -42,14 +46,16 @@ class NotificationService {
 
     await androidPlugin?.createNotificationChannel(_channel);
 
-    /// Foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       showNotification(message);
     });
 
-    /// Print token (for testing)
-    String? token = await FirebaseMessaging.instance.getToken();
-    print("FCM TOKEN: $token");
+    try {
+      String? token = await FirebaseMessaging.instance.getToken();
+      print("FCM TOKEN: $token");
+    } catch (e) {
+      print("FCM token unavailable: $e");
+    }
   }
 
   static Future<void> showNotification(RemoteMessage message) async {
